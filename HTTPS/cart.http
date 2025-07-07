@@ -1,0 +1,123 @@
+### Add Item to Cart
+POST http://localhost:3000/api/cart/add
+Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJDdXN0b21lcl9pZCI6IjY4NmMzYzhjMzVhYTYwYWMxYzNiYjc4MSIsInVzZXJuYW1lIjoic2FyYTQ1NiIsIlR5cGUiOiJDdXN0b21lciIsImlhdCI6MTc1MTkyNTgzMiwiZXhwIjoxNzUxOTI5NDMyfQ.qVuxvagO-ruOp3fUVdzx4_EcCOycFgGnry3U9S-gPeE
+Content-Type: application/json
+{
+    "productId": "12255",
+    "productName": "Automatic Washing Machine",
+    "productNameArabic": "غسالة أوتوماتيك",
+    "price": 8090,
+    "quantity": 1,
+    "unit": "نقطة",
+    "image": "washing_machine.jpg"
+}
+
+###
+
+### Add Another Item to Cart
+POST http://localhost:3000/api/cart/add
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJDdXN0b21lcl9pZCI6IjY4NmMzYzhjMzVhYTYwYWMxYzNiYjc4MSIsInVzZXJuYW1lIjoic2FyYTQ1NiIsIlR5cGUiOiJDdXN0b21lciIsImlhdCI6MTc1MTkyNTgzMiwiZXhwIjoxNzUxOTI5NDMyfQ.qVuxvagO-ruOp3fUVdzx4_EcCOycFgGnry3U9S-gPeE
+Content-Type: application/json
+
+{
+    "productId": "12256",
+    "productName": "Water Recycling",
+    "productNameArabic": "إعادة مياه",
+    "price": 4500,
+    "quantity": 2,
+    "unit": "نقطة",
+    "image": "water_recycling.jpg"
+}
+
+###
+
+### View Cart
+GET http://localhost:3000/api/cart/view
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+###
+
+### Update Cart Item Quantity
+PUT http://localhost:3000/api/cart/update
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+    "productId": "12255",
+    "quantity": 3
+}
+
+###
+
+### Update Cart Item Quantity to Zero (Remove Item)
+PUT http://localhost:3000/api/cart/update
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+    "productId": "12256",
+    "quantity": 0
+}
+
+###
+
+### Remove Item from Cart by Product ID
+DELETE http://localhost:3000/api/cart/remove/12255
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+###
+
+### Clear Entire Cart
+DELETE http://localhost:3000/api/cart/clear
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+###
+
+### Add Item with Arabic Product Details (Based on Image)
+POST http://localhost:3000/api/cart/add
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+    "productId": "12255",
+    "productName": "Automatic Washing Machine",
+    "productNameArabic": "غسالة أوتوماتيك",
+    "price": 8090,
+    "quantity": 1,
+    "unit": "نقطة"
+}
+
+###
+
+### Add Water Recycling Item (Based on Image)
+POST http://localhost:3000/api/cart/add
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+    "productId": "12256",
+    "productName": "Water Recycling",
+    "productNameArabic": "إعادة مياه",
+    "price": 4500,
+    "quantity": 1,
+    "unit": "نقطة"
+}
+
+###
+
+### Test Adding Same Item (Should Update Quantity)
+POST http://localhost:3000/api/cart/add
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJDdXN0b21lcl9pZCI6IjY4NmMzYzhjMzVhYTYwYWMxYzNiYjc4MSIsInVzZXJuYW1lIjoic2FyYTQ1NiIsIlR5cGUiOiJDdXN0b21lciIsImlhdCI6MTc1MTkyNTc2NSwiZXhwIjoxNzUxOTI5MzY1fQ.OS55lcGL1bPadY0LpnZxpmi_Fgcw27got9D50Z9IXfU
+Content-Type: application/json
+
+{
+    "productId": "12255",
+    "productName": "Automatic Washing Machine",
+    "productNameArabic": "غسالة أوتوماتيك",
+    "price": 8090,
+    "quantity": 1,
+    "unit": "نقطة"
+}

@@ -1,0 +1,95 @@
+### Submit Contact Form (Public - No Authentication Required)
+POST http://localhost:3000/api/contact/submit
+Content-Type: application/json
+
+{
+    "email": "customer@example.com",
+    "idNumber": "123456789",
+    "communicationType": "email",
+    "message": "أريد الاستفسار عن خدماتكم. هل يمكنكم مساعدتي في فهم كيفية استخدام النظام؟",
+    "phone": "+201234567890",
+    "priority": "medium"
+}
+
+###
+
+### Submit Contact Form - Technical Issue
+POST http://localhost:3000/api/contact/submit
+Content-Type: application/json
+
+{
+    "email": "user@example.com",
+    "idNumber": "987654321",
+    "communicationType": "email",
+    "message": "I'm experiencing technical difficulties with the profile picture upload feature. The system keeps showing an error message.",
+    "phone": "+201987654321",
+    "priority": "high"
+}
+
+###
+
+### Submit Contact Form - Complaint
+POST http://localhost:3000/api/contact/submit
+Content-Type: application/json
+
+{
+    "email": "complaint@example.com",
+    "idNumber": "456789123",
+    "communicationType": "phone",
+    "message": "أواجه مشكلة في تحديث بياناتي الشخصية. النظام لا يحفظ التغييرات التي أقوم بها.",
+    "priority": "urgent"
+}
+
+###
+
+### Submit Contact Form - Minimal Required Fields
+POST http://localhost:3000/api/contact/submit
+Content-Type: application/json
+
+{
+    "email": "minimal@example.com",
+    "idNumber": "12345",
+    "communicationType": "email",
+    "message": "This is a test message with minimal required fields only."
+}
+
+###
+
+### Get All Contact Messages (Admin Only)
+GET http://localhost:3000/api/contact/messages
+Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE
+Content-Type: application/json
+
+###
+
+### Get Contact Messages with Filters (Admin Only)
+GET http://localhost:3000/api/contact/messages?status=pending&priority=high&page=1&limit=5
+Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE
+Content-Type: application/json
+
+###
+
+### Get Single Contact Message (Admin Only)
+GET http://localhost:3000/api/contact/messages/CONTACT_ID_HERE
+Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE
+Content-Type: application/json
+
+###
+
+### Update Contact Status (Admin Only)
+PUT http://localhost:3000/api/contact/messages/CONTACT_ID_HERE
+Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+    "status": "in_progress",
+    "priority": "high",
+    "adminResponse": "Thank you for contacting us. We are currently investigating your issue and will get back to you within 24 hours."
+}
+
+###
+
+### Get Contact Statistics (Admin Only)
+GET http://localhost:3000/api/contact/stats
+Authorization: Bearer YOUR_ADMIN_JWT_TOKEN_HERE
+Content-Type: application/json

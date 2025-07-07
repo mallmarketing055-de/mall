@@ -1,0 +1,44 @@
+### Step 1: Login to get fresh JWT token
+POST http://localhost:3000/api/customers/signin
+Content-Type: application/json
+
+{
+    "username": "sara456",
+    "password": "password456"
+}
+
+###
+
+### Step 2: Add Item to Cart (Use token from Step 1)
+POST http://localhost:3000/api/cart/add
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_1
+Content-Type: application/json
+
+{
+    "productId": "12255",
+    "productName": "Automatic Washing Machine",
+    "productNameArabic": "غسالة أوتوماتيك",
+    "price": 8090,
+    "quantity": 1,
+    "unit": "نقطة",
+    "image": "washing_machine.jpg"
+}
+
+###
+
+### Step 3: View Cart
+GET http://localhost:3000/api/cart/view
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_1
+Content-Type: application/json
+
+###
+
+### Step 4: Update Cart Item
+PUT http://localhost:3000/api/cart/update
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_1
+Content-Type: application/json
+
+{
+    "productId": "12255",
+    "quantity": 2
+}

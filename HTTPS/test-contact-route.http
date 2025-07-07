@@ -1,0 +1,29 @@
+### Test if Contact Route is Working - Health Check
+GET http://localhost:3000/api/health
+Content-Type: application/json
+
+###
+
+### Test Contact Submit Route - Simple Test
+POST http://localhost:3000/api/contact/submit
+Content-Type: application/json
+
+{
+    "email": "test@example.com",
+    "idNumber": "12345",
+    "communicationType": "email",
+    "message": "This is a test message to check if the route is working."
+}
+
+###
+
+### Test Contact Submit Route - Minimal Required Fields
+POST http://localhost:3000/api/contact/submit
+Content-Type: application/json
+
+{
+    "email": "simple@test.com",
+    "idNumber": "54321",
+    "communicationType": "phone",
+    "message": "Testing the contact API with minimal fields."
+}

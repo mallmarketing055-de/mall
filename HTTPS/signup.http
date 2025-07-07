@@ -1,0 +1,65 @@
+
+### Customer Signup with Profile Picture Upload
+POST http://localhost:3000/api/customers/signup
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="name"
+
+أحمد محمد
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="username"
+
+ahmed123
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="email"
+
+ahmed@example.com
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="password"
+
+password123
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="phone"
+
++201234567890
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="Address"
+
+123 شارع النيل، القاهرة، مصر
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="DOB"
+
+1990-05-15
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="Gender"
+
+ذكر
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="communicationType"
+
+كلاهما
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="profilePicture"; filename="profile.jpg"
+Content-Type: image/jpeg
+
+< ./test-images/profile.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+###
+
+### Customer Signup without Profile Picture (JSON)
+POST http://localhost:3000/api/customers/signup
+Content-Type: application/json
+
+{
+    "name": "Sara Ahmed",
+    "username": "sara456",
+    "email": "sara@example.com",
+    "password": "password456",
+    "phone": "01987654321",
+    "Address": "456 Main Street, Cairo, Egypt",
+    "DOB": "1995-08-20",
+    "Gender": "female",
+    "communicationType": "email"
+}

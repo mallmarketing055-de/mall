@@ -1,0 +1,8 @@
+### Customer Login
+POST http://localhost:3000/api/customers/signin
+Content-Type: application/json
+
+{
+    "username": "sara456",
+    "password": "password456"
+}

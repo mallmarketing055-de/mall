@@ -1,0 +1,68 @@
+### Update Customer Profile - All Fields
+PUT http://localhost:3000/api/customers/profile
+Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJDdXN0b21lcl9pZCI6IjY4NmMzYjI1MzVhYTYwYWMxYzNiYjc3YyIsInVzZXJuYW1lIjoiYWhtZWQxMjMiLCJUeXBlIjoiQ3VzdG9tZXIiLCJpYXQiOjE3NTE5MjQxNzYsImV4cCI6MTc1MTkyNzc3Nn0.O5KpzUBKzuZ7NXYM6ReJj10azfnxmlvVP5Qif7KzwfE
+Content-Type: application/json
+
+{
+    "name": "أحمد محمد المحدث",
+    "username": "ahmed_updated",
+    "email": "ahmed.updated@example.com",
+    "phone": "+201234567899",
+    "Address": "456 شارع الجديد، الجيزة، مصر",
+    "DOB": "1990-06-20",
+    "Gender": "ذكر",
+    "communicationType": "email"
+}
+
+###
+
+### Update Customer Profile - Partial Update (Name and Phone only)
+PUT http://localhost:3000/api/customers/profile
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+    "name": "Sara Ahmed Updated",
+    "phone": "+201987654322"
+}
+
+###
+
+### Update Customer Profile - Email Only
+PUT http://localhost:3000/api/customers/profile
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+    "email": "sara.newemail@example.com"
+}
+
+###
+
+### Update Customer Profile - Communication Type Only
+PUT http://localhost:3000/api/customers/profile
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+    "communicationType": "both"
+}
+
+###
+
+### Update Customer Profile - Address and Gender
+PUT http://localhost:3000/api/customers/profile
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+    "Address": "789 New Street, Alexandria, Egypt",
+    "Gender": "female"
+}
+
+###
+
+### Get Updated Profile
+GET http://localhost:3000/api/customers/profile
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json

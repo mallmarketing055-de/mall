@@ -1,0 +1,10 @@
+### Get Customer Profile (Protected Route)
+GET http://localhost:3000/api/customers/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJDdXN0b21lcl9pZCI6IjY4NmMzYjI1MzVhYTYwYWMxYzNiYjc3YyIsInVzZXJuYW1lIjoiYWhtZWQxMjMiLCJUeXBlIjoiQ3VzdG9tZXIiLCJpYXQiOjE3NTE5MjQxNzYsImV4cCI6MTc1MTkyNzc3Nn0.O5KpzUBKzuZ7NXYM6ReJj10azfnxmlvVP5Qif7KzwfE
+Content-Type: application/json
+
+###
+
+### Health Check
+GET http://localhost:3000/api/health
+Content-Type: application/json
