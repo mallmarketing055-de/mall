@@ -150,13 +150,17 @@ module.exports.generateAJWT = (Admin) => {
 
 module.exports.auth = async (token) => {
   try {
-    // verify the integrity of the token and extract its payload
-    // it will throw an error by default if the token is invalid or had expired
-    const tokenPayload = await JWT.verify(token, process.env.JWT_SECRET);
-    // return the token payload as we might need it later in the controller
+    // verify and decode the JWT
+    const tokenPayload = JWT.verify(token, process.env.JWT_SECRET);
     return tokenPayload;
   } catch (error) {
-    throw new Error('Unauthrozied.');
+    if (error.name === "TokenExpiredError") {
+      throw new Error("Token has expired. Please log in again.");
+    } else if (error.name === "JsonWebTokenError") {
+      throw new Error("Invalid token. Authorization denied.");
+    } else {
+      throw new Error("Unauthorized access.");
+    }
   }
 };
 

@@ -2,6 +2,7 @@
 POST http://localhost:3000/api/cart/add
 Authorization:Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJDdXN0b21lcl9pZCI6IjY4NmMzYzhjMzVhYTYwYWMxYzNiYjc4MSIsInVzZXJuYW1lIjoic2FyYTQ1NiIsIlR5cGUiOiJDdXN0b21lciIsImlhdCI6MTc1MTkyNTgzMiwiZXhwIjoxNzUxOTI5NDMyfQ.qVuxvagO-ruOp3fUVdzx4_EcCOycFgGnry3U9S-gPeE
 Content-Type: application/json
+
 {
     "productId": "12255",
     "productName": "Automatic Washing Machine",
