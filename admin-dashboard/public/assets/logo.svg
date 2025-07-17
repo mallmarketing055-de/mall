@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 400 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Orange person figure -->
+  <g>
+    <!-- Head -->
+    <circle cx="105" cy="80" r="35" fill="#D2691E"/>
+    
+    <!-- Body -->
+    <path d="M 15 180 Q 15 150 45 150 L 165 150 Q 195 150 195 180 L 195 380 Q 195 410 165 410 L 45 410 Q 15 410 15 380 Z" fill="#D2691E"/>
+    
+    <!-- Inner body cutout -->
+    <path d="M 75 230 Q 75 200 105 200 L 105 200 Q 135 200 135 230 L 135 350 Q 135 380 105 380 L 105 380 Q 75 380 75 350 Z" fill="white"/>
+  </g>
+  
+  <!-- Gray person figure -->
+  <g>
+    <!-- Head -->
+    <circle cx="320" cy="50" r="25" fill="#4A4A4A"/>
+    
+    <!-- Body -->
+    <path d="M 270 120 Q 270 90 300 90 L 340 90 Q 370 90 370 120 L 370 380 Q 370 410 340 410 L 300 410 Q 270 410 270 380 Z" fill="#808080"/>
+    
+    <!-- Inner body cutout -->
+    <path d="M 310 170 Q 310 140 330 140 L 330 140 Q 350 140 350 170 L 350 350 Q 350 380 330 380 L 330 380 Q 310 380 310 350 Z" fill="white"/>
+  </g>
+  
+  <!-- Connecting element -->
+  <path d="M 135 300 Q 200 280 200 320 Q 200 360 270 340" fill="none" stroke="#D2691E" stroke-width="20"/>
+  
+  <!-- MALL text -->
+  <g fill="#D2691E" font-family="Arial, sans-serif" font-weight="bold">
+    <text x="0" y="500" font-size="60">M</text>
+    <text x="80" y="500" font-size="60">A</text>
+    <text x="160" y="500" font-size="60">L</text>
+    <text x="240" y="500" font-size="60">L</text>
+  </g>
+  
+  <!-- Marketing text -->
+  <g fill="#4A4A4A" font-family="Arial, sans-serif" font-weight="normal">
+    <text x="0" y="550" font-size="24">Marketing</text>
+  </g>
+</svg>

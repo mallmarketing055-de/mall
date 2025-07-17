@@ -34,4 +34,48 @@ router.put('/profile/picture',
   customerController.updateProfilePicture
 );
 
+// Admin Routes (Protected)
+
+// Get All Customers (Admin only)
+router.get('/all',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
+  customerController.getAllCustomers
+);
+
+// Get Customer Stats (Admin only)
+router.get('/stats',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
+  customerController.getCustomerStats
+);
+
+// Get Customer by ID (Admin only)
+router.get('/admin/:id',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
+  customerController.getCustomerById
+);
+
+// Get Customer by ID (Alternative route for frontend compatibility)
+router.get('/:id',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
+  customerController.getCustomerById
+);
+
+// Delete Customer (Admin only)
+router.delete('/:id',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
+  customerController.deleteCustomer
+);
+
+// Get Customer Statistics (Admin only)
+router.get('/stats/overview',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
+  customerController.getCustomerStats
+);
+
 module.exports = router;

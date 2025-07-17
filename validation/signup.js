@@ -55,7 +55,12 @@ module.exports.validatePostUser=()=>{
             .notEmpty()
             .withMessage('Communication type cannot be empty')
             .isIn(['email', 'phone', 'both', 'بريد إلكتروني', 'هاتف', 'كلاهما'])
-            .withMessage('Invalid communication type')
+            .withMessage('Invalid communication type'),
+
+        check('referredBy')
+            .optional()
+            .matches(/^\d{6}$/)
+            .withMessage('Referral code must be a 6-digit number')
 
         // Note: profilePicture is handled as file upload, not in body validation
     ]
@@ -350,6 +355,190 @@ module.exports.validateUpdateCard=()=>{
             .optional()
             .isBoolean()
             .withMessage('isActive must be a boolean value')
+    ]
+    return validationMiddleware;
+}
+
+module.exports.validateAdminSignup=()=>{
+    const validationMiddleware=[
+        check('username')
+            .notEmpty()
+            .withMessage('Username cannot be empty')
+            .isLength({ min: 3, max: 50 })
+            .withMessage('Username must be between 3 and 50 characters')
+            .matches(/^[a-zA-Z0-9_]+$/)
+            .withMessage('Username can only contain letters, numbers, and underscores'),
+
+        check('email')
+            .isEmail()
+            .withMessage('Email is invalid')
+            .normalizeEmail(),
+
+        check('password')
+            .isLength({ min: 6 })
+            .withMessage('Password must be at least 6 characters long')
+    ]
+    return validationMiddleware;
+}
+
+module.exports.validateAdminLogin=()=>{
+    const validationMiddleware=[
+        check('email')
+            .notEmpty()
+            .withMessage('Email cannot be empty')
+            .isEmail()
+            .withMessage('Please provide a valid email'),
+
+        check('password')
+            .notEmpty()
+            .withMessage('Password cannot be empty')
+    ]
+    return validationMiddleware;
+}
+
+module.exports.validateProduct=()=>{
+    const validationMiddleware=[
+        check('name')
+            .notEmpty()
+            .withMessage('Product name cannot be empty')
+            .isLength({ min: 1, max: 200 })
+            .withMessage('Product name must be between 1 and 200 characters'),
+
+        check('nameArabic')
+            .notEmpty()
+            .withMessage('Arabic product name cannot be empty')
+            .isLength({ min: 1, max: 200 })
+            .withMessage('Arabic product name must be between 1 and 200 characters'),
+
+        check('price')
+            .notEmpty()
+            .withMessage('Price cannot be empty')
+            .isNumeric()
+            .withMessage('Price must be a number')
+            .custom((value) => {
+                if (value < 0) {
+                    throw new Error('Price cannot be negative');
+                }
+                return true;
+            }),
+
+        check('category')
+            .notEmpty()
+            .withMessage('Category cannot be empty')
+            .isLength({ min: 1, max: 100 })
+            .withMessage('Category must be between 1 and 100 characters'),
+
+        check('stock')
+            .notEmpty()
+            .withMessage('Stock cannot be empty')
+            .isInt({ min: 0 })
+            .withMessage('Stock must be a non-negative integer'),
+
+        check('description')
+            .optional()
+            .isLength({ max: 1000 })
+            .withMessage('Description cannot exceed 1000 characters'),
+
+        check('descriptionArabic')
+            .optional()
+            .isLength({ max: 1000 })
+            .withMessage('Arabic description cannot exceed 1000 characters'),
+
+        check('image')
+            .optional()
+            .isString()
+            .withMessage('Image must be a string'),
+
+        check('weight')
+            .optional()
+            .isNumeric()
+            .withMessage('Weight must be a number')
+            .custom((value) => {
+                if (value < 0) {
+                    throw new Error('Weight cannot be negative');
+                }
+                return true;
+            }),
+
+        check('manufacturer')
+            .optional()
+            .isLength({ max: 100 })
+            .withMessage('Manufacturer cannot exceed 100 characters'),
+
+        check('warranty')
+            .optional()
+            .isLength({ max: 100 })
+            .withMessage('Warranty cannot exceed 100 characters')
+    ]
+    return validationMiddleware;
+}
+
+module.exports.validateTransaction=()=>{
+    const validationMiddleware=[
+        check('customerId')
+            .notEmpty()
+            .withMessage('Customer ID cannot be empty')
+            .isMongoId()
+            .withMessage('Customer ID must be a valid MongoDB ObjectId'),
+
+        check('amount')
+            .notEmpty()
+            .withMessage('Amount cannot be empty')
+            .isNumeric()
+            .withMessage('Amount must be a number')
+            .custom((value) => {
+                if (value <= 0) {
+                    throw new Error('Amount must be greater than 0');
+                }
+                return true;
+            }),
+
+        check('type')
+            .notEmpty()
+            .withMessage('Transaction type cannot be empty')
+            .isIn(['purchase', 'refund', 'payment', 'withdrawal', 'deposit'])
+            .withMessage('Invalid transaction type'),
+
+        check('paymentMethod')
+            .optional()
+            .isIn(['credit_card', 'debit_card', 'paypal', 'bank_transfer', 'cash', 'wallet'])
+            .withMessage('Invalid payment method'),
+
+        check('description')
+            .optional()
+            .isLength({ max: 500 })
+            .withMessage('Description cannot exceed 500 characters'),
+
+        check('currency')
+            .optional()
+            .isIn(['USD', 'SAR', 'AED', 'EGP'])
+            .withMessage('Invalid currency'),
+
+        check('items')
+            .optional()
+            .isArray()
+            .withMessage('Items must be an array'),
+
+        check('items.*.productId')
+            .if(check('items').exists())
+            .notEmpty()
+            .withMessage('Product ID is required for each item'),
+
+        check('items.*.quantity')
+            .if(check('items').exists())
+            .isInt({ min: 1 })
+            .withMessage('Quantity must be a positive integer'),
+
+        check('items.*.price')
+            .if(check('items').exists())
+            .isNumeric()
+            .withMessage('Price must be a number')
+            .custom((value) => {
+                if (value < 0) {
+                    throw new Error('Price cannot be negative');
+                }
+                return true;
+            })
     ]
     return validationMiddleware;
 }
