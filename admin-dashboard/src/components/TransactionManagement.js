@@ -35,18 +35,29 @@ const TransactionManagement = () => {
   const fetchTransactions = async () => {
     try {
       setLoading(true);
+
+      // Check authentication
+      const token = localStorage.getItem('adminToken');
+      console.log('Admin token exists:', !!token);
+
       const params = {
         page: currentPage,
         limit: 10,
         search: searchTerm,
         ...filters
       };
-      
+
+      console.log('Fetching transactions with params:', params);
       const response = await transactionAPI.getAllTransactions(params);
-      setTransactions(response.data.transactions || []);
-      setTotalPages(response.data.totalPages || 1);
+      console.log('Transactions API Response:', response.data); // Debug log
+
+      const transactions = response.data.data?.transactions || [];
+      console.log('Transactions found:', transactions.length);
+      setTransactions(transactions);
+      setTotalPages(response.data.data?.pagination?.totalPages || 1);
     } catch (error) {
       console.error('Error fetching transactions:', error);
+      console.error('Error details:', error.response);
       toast.error('Failed to fetch transactions');
     } finally {
       setLoading(false);
@@ -56,7 +67,8 @@ const TransactionManagement = () => {
   const fetchTransactionStats = async () => {
     try {
       const response = await transactionAPI.getTransactionStats();
-      setStats(response.data.stats || {});
+      console.log('Transaction Stats Response:', response.data); // Debug log
+      setStats(response.data.data?.stats || response.data.stats || {});
     } catch (error) {
       console.error('Error fetching transaction stats:', error);
     }
@@ -65,7 +77,8 @@ const TransactionManagement = () => {
   const handleViewTransaction = async (transactionId) => {
     try {
       const response = await transactionAPI.getTransactionById(transactionId);
-      setSelectedTransaction(response.data.transaction);
+      console.log('Transaction Detail Response:', response.data); // Debug log
+      setSelectedTransaction(response.data.data?.transaction || response.data.transaction);
       setShowModal(true);
     } catch (error) {
       console.error('Error fetching transaction details:', error);
@@ -344,14 +357,14 @@ const TransactionManagement = () => {
                   </thead>
                   <tbody>
                     {transactions.map((transaction) => (
-                      <tr key={transaction.id} className="table-row">
+                      <tr key={transaction._id || transaction.id} className="table-row">
                         <td className="transaction-info-cell">
                           <div className="transaction-avatar">
                             <div className="transaction-icon">
                               <FaReceipt />
                             </div>
                             <div className="transaction-details">
-                              <div className="transaction-id">#{transaction.id}</div>
+                              <div className="transaction-id">#{transaction._id || transaction.id}</div>
                               <div className="transaction-ref">Ref: {transaction.reference || 'N/A'}</div>
                             </div>
                           </div>
@@ -390,7 +403,7 @@ const TransactionManagement = () => {
                           <div className="action-buttons">
                             <button
                               className="action-btn view-btn"
-                              onClick={() => handleViewTransaction(transaction.id)}
+                              onClick={() => handleViewTransaction(transaction._id || transaction.id)}
                               title="View Details"
                             >
                               <FaEye />
@@ -402,10 +415,11 @@ const TransactionManagement = () => {
                   </tbody>
                 </table>
                 
-                {transactions.length === 0 && (
+                {transactions.length === 0 && !loading && (
                   <div className="empty-state">
                     <FaReceipt />
                     <p>No transactions found</p>
+                    <p>Debug: Transactions array length: {transactions.length}</p>
                   </div>
                 )}
               </div>
@@ -449,7 +463,7 @@ const TransactionManagement = () => {
                 <div className="transaction-details">
                   <div className="detail-row">
                     <label>Transaction ID:</label>
-                    <span>#{selectedTransaction.id}</span>
+                    <span>#{selectedTransaction._id || selectedTransaction.id}</span>
                   </div>
                   <div className="detail-row">
                     <label>User:</label>

@@ -38,8 +38,14 @@ const ProductManagement = () => {
       };
       
       const response = await productAPI.getAllProducts(params);
-      setProducts(response.data.products || []);
-      setTotalPages(response.data.totalPages || 1);
+      console.log('Full API Response:', response); // Debug log
+      console.log('Response Data:', response.data); // Debug log
+      console.log('Products Array:', response.data.data?.products); // Debug log
+
+      const products = response.data.data?.products || [];
+      console.log('Setting products:', products); // Debug log
+      setProducts(products);
+      setTotalPages(response.data.data?.pagination?.totalPages || 1);
     } catch (error) {
       console.error('Error fetching products:', error);
       toast.error('Failed to fetch products');
@@ -50,12 +56,16 @@ const ProductManagement = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
 
     try {
+      // Check authentication
+      const token = localStorage.getItem('adminToken');
+      console.log('Admin token exists:', !!token);
+
       const productData = {
         ...formData,
         price: parseFloat(formData.price),
@@ -63,17 +73,23 @@ const ProductManagement = () => {
       };
 
       if (editingProduct) {
-        await productAPI.updateProduct(editingProduct.id, productData);
+        console.log('Updating product with ID:', editingProduct._id || editingProduct.id);
+        console.log('Product data:', productData);
+        const response = await productAPI.updateProduct(editingProduct._id || editingProduct.id, productData);
+        console.log('Update response:', response);
         toast.success('Product updated successfully');
       } else {
-        await productAPI.createProduct(productData);
+        console.log('Creating new product:', productData);
+        const response = await productAPI.createProduct(productData);
+        console.log('Create response:', response);
         toast.success('Product created successfully');
       }
-      
+
       fetchProducts();
       closeModal();
     } catch (error) {
       console.error('Error saving product:', error);
+      console.error('Error details:', error.response);
       toast.error(error.response?.data?.message || 'Failed to save product');
     }
   };
@@ -228,7 +244,7 @@ const ProductManagement = () => {
                   </thead>
                   <tbody>
                     {products.map((product) => (
-                      <tr key={product.id} className="table-row">
+                      <tr key={product._id || product.id} className="table-row">
                         <td className="product-info-cell">
                           <div className="product-avatar">
                             <div className="product-icon">
@@ -270,7 +286,7 @@ const ProductManagement = () => {
                             </button>
                             <button
                               className="action-btn delete-btn"
-                              onClick={() => handleDelete(product.id)}
+                              onClick={() => handleDelete(product._id || product.id)}
                               title="Delete Product"
                             >
                               <FaTrash />
@@ -282,9 +298,10 @@ const ProductManagement = () => {
                   </tbody>
                 </table>
                 
-                {products.length === 0 && (
+                {products.length === 0 && !loading && (
                   <div className="empty-state">
                     <p>No products found</p>
+                    <p>Debug: Products array length: {products.length}</p>
                   </div>
                 )}
               </div>

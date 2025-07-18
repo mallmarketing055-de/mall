@@ -158,12 +158,13 @@ const Dashboard = () => {
 
       // Fetch recent transactions
       try {
-        const recentRes = await transactionAPI.getAllTransactions({ 
-          limit: 5, 
-          sort: 'createdAt',
-          order: 'desc' 
+        const recentRes = await transactionAPI.getAllTransactions({
+          limit: 5,
+          sortBy: 'createdAt',
+          sortOrder: 'desc'
         });
-        setRecentTransactions(recentRes.data.transactions || []);
+        console.log('Recent transactions response:', recentRes.data);
+        setRecentTransactions(recentRes.data.data?.transactions || []);
       } catch (error) {
         console.error('Error fetching recent transactions:', error);
       }
@@ -260,7 +261,9 @@ const Dashboard = () => {
               </a>
             </div>
             
-            {recentTransactions.length > 0 ? (
+            {loading ? (
+              <div className="loading">Loading recent transactions...</div>
+            ) : recentTransactions.length > 0 ? (
               <div className="table-responsive">
                 <table className="table">
                   <thead>
@@ -274,8 +277,8 @@ const Dashboard = () => {
                   </thead>
                   <tbody>
                     {recentTransactions.map((transaction) => (
-                      <tr key={transaction.id}>
-                        <td>#{transaction.id}</td>
+                      <tr key={transaction._id || transaction.id}>
+                        <td>#{transaction._id || transaction.id}</td>
                         <td>{transaction.userName || 'N/A'}</td>
                         <td>${transaction.amount?.toFixed(2) || '0.00'}</td>
                         <td>
@@ -293,6 +296,7 @@ const Dashboard = () => {
               <div className="empty-state">
                 <FaReceipt />
                 <p>No recent transactions found</p>
+                <p>Debug: Transactions array length: {recentTransactions.length}</p>
               </div>
             )}
           </div>
@@ -594,6 +598,54 @@ const Dashboard = () => {
         .btn-sm {
           padding: 12px 24px;
           font-size: 0.8rem;
+        }
+
+        .status-badge {
+          padding: 6px 12px;
+          border-radius: 20px;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .status-badge.completed {
+          background: #d1fae5;
+          color: #065f46;
+        }
+
+        .status-badge.pending {
+          background: #fef3c7;
+          color: #92400e;
+        }
+
+        .status-badge.failed {
+          background: #fee2e2;
+          color: #991b1b;
+        }
+
+        .status-badge.cancelled {
+          background: #f3f4f6;
+          color: #374151;
+        }
+
+        .loading {
+          text-align: center;
+          padding: 40px;
+          color: #6b7280;
+          font-style: italic;
+        }
+
+        .empty-state {
+          text-align: center;
+          padding: 40px;
+          color: #6b7280;
+        }
+
+        .empty-state svg {
+          font-size: 48px;
+          margin-bottom: 16px;
+          opacity: 0.5;
         }
 
         @media (max-width: 768px) {

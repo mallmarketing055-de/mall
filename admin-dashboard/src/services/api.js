@@ -73,9 +73,18 @@ export const productAPI = {
   // Product Management
   getAllProducts: (params) => api.get('/api/products', { params }),
   getProductById: (id) => api.get(`/api/products/${id}`),
-  createProduct: (productData) => api.post('/api/products', productData),
-  updateProduct: (id, productData) => api.put(`/api/products/${id}`, productData),
-  deleteProduct: (id) => api.delete(`/api/products/${id}`),
+  createProduct: (productData) => {
+    console.log('Creating product:', productData);
+    return api.post('/api/products', productData);
+  },
+  updateProduct: (id, productData) => {
+    console.log('Updating product ID:', id, 'with data:', productData);
+    return api.put(`/api/products/${id}`, productData);
+  },
+  deleteProduct: (id) => {
+    console.log('Deleting product ID:', id);
+    return api.delete(`/api/products/${id}`);
+  },
 };
 
 export const userAPI = {
@@ -91,7 +100,7 @@ export const transactionAPI = {
   getAllTransactions: (params) => api.get('/api/transactions', { params }),
   getTransactionById: (id) => api.get(`/api/transactions/${id}`),
   getUserTransactions: (userId, params) => api.get(`/api/transactions/user/${userId}`, { params }),
-  exportTransactions: (params) => api.get('/api/transactions/export', { 
+  exportTransactions: (params) => api.get('/api/transactions/export/csv', {
     params,
     responseType: 'blob' // For file download
   }),
