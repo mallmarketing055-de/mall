@@ -2,7 +2,6 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
-const cors = require('cors');
 const path = require('path');
 
 const initiateDBConnection = require('./config/db');
@@ -11,6 +10,10 @@ const initiateDBConnection = require('./config/db');
 const customerRoutes = require('./routes/customerRoutes');
 const contactRoutes = require('./routes/contactRoutes');
 const cartRoutes = require('./routes/cartRoutes');
+const referralRoutes = require('./routes/referralRoutes');
+const adminRoutes = require('./routes/adminRoutes');
+const productRoutes = require('./routes/productRoutes');
+const transactionRoutes = require('./routes/transactionRoutes');
 
 dotenv.config({
     path: './config/.env',
@@ -21,7 +24,31 @@ const PORT = process.env.PORT;
 const app = express();
 app.use(morgan('dev'));
 app.use(express.json());
-app.use(cors());
+// Configure CORS manually for better control
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  const allowedOrigins = ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://localhost:3000'];
+
+  console.log(`${req.method} ${req.path} - Origin: ${origin}`);
+
+  if (allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  }
+
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+
+  if (req.method === 'OPTIONS') {
+    console.log('Preflight request received for:', req.path);
+    console.log('Request headers:', req.headers);
+    res.status(200).end();
+    return;
+  }
+
+  next();
+});
 
 // Serve static files (uploaded images)
 app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -30,6 +57,10 @@ app.use('/api/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/customers', customerRoutes);
 app.use('/api/contact', contactRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/referral', referralRoutes);
+app.use('/api/Admin', adminRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/transactions', transactionRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

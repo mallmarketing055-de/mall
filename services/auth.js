@@ -17,6 +17,7 @@ module.exports.createUser = async (CustomerInfo) => {
       DOB: CustomerInfo.DOB,
       Gender: CustomerInfo.Gender,
       communicationType: CustomerInfo.communicationType,
+      referredBy: CustomerInfo.referredBy,
       profilePicture: CustomerInfo.profilePicture || {
         filename: 'default-avatar.png',
         originalName: null,
@@ -48,12 +49,24 @@ module.exports.doesUserExist = async (username,email) => {
 };
 module.exports.doesEmailExist = async (email) => {
   const existingUser = await CustomerModel.findOne({
-  
+
     email:email
 
   });
 
   if (existingUser) {
+    return true;
+  } else {
+    return false;
+  }
+};
+
+module.exports.doesReferralCodeExist = async (referenceNumber) => {
+  const existingCustomer = await CustomerModel.findOne({
+    referenceNumber: referenceNumber
+  });
+
+  if (existingCustomer) {
     return true;
   } else {
     return false;

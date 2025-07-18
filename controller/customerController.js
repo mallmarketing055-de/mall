@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const authService = require('../services/auth');
+const CustomerModel = require('../model/Customers');
 
 // Customer Signup
 module.exports.signup = async (req, res) => {
@@ -14,7 +15,7 @@ module.exports.signup = async (req, res) => {
       });
     }
 
-    const { name, username, email, password, phone, Address, DOB, Gender, communicationType } = req.body;
+    const { name, username, email, password, phone, Address, DOB, Gender, communicationType, referredBy } = req.body;
 
     // Check if user already exists
     const userExists = await authService.doesUserExist(username, email);
@@ -32,6 +33,26 @@ module.exports.signup = async (req, res) => {
         success: false,
         message: 'Email already registered'
       });
+    }
+
+    // Validate referral code if provided
+    if (referredBy) {
+      // Check if referral code is valid 6-digit number
+      if (!/^\d{6}$/.test(referredBy)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Referral code must be a 6-digit number'
+        });
+      }
+
+      // Check if referral code exists
+      const referralExists = await authService.doesReferralCodeExist(referredBy);
+      if (!referralExists) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid referral code'
+        });
+      }
     }
 
     // Handle profile picture upload
@@ -64,7 +85,8 @@ module.exports.signup = async (req, res) => {
       DOB,
       Gender,
       communicationType,
-      profilePicture: profilePictureData
+      profilePicture: profilePictureData,
+      referredBy: referredBy || null
     };
 
     const newUser = await authService.createUser(customerInfo);
@@ -86,6 +108,8 @@ module.exports.signup = async (req, res) => {
           DOB: newUser.DOB,
           Gender: newUser.Gender,
           communicationType: newUser.communicationType,
+          referenceNumber: newUser.referenceNumber,
+          referralLevel: newUser.referralLevel,
           profilePicture: {
             filename: newUser.profilePicture.filename,
             url: `/api/uploads/profile-pictures/${newUser.profilePicture.filename}`
@@ -364,6 +388,210 @@ module.exports.updateProfile = async (req, res) => {
 
   } catch (error) {
     console.error('Update profile error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+// Get All Customers (Admin only)
+module.exports.getAllCustomers = async (req, res) => {
+  try {
+    console.log('getAllCustomers called - Request received!');
+    console.log('Request headers:', req.headers);
+    console.log('Request query:', req.query);
+    console.log('Request user:', req.user);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const search = req.query.search || '';
+    const sortBy = req.query.sortBy || 'createdAt';
+    const sortOrder = req.query.sortOrder === 'asc' ? 1 : -1;
+
+    // Build query
+    const query = {};
+
+    if (search) {
+      query.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { username: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { phone: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Build sort object
+    const sort = {};
+    sort[sortBy] = sortOrder;
+
+    console.log('Fetching customers with query:', query);
+    const customers = await CustomerModel.find(query)
+      .select('-password')
+      .sort(sort)
+      .skip(skip)
+      .limit(limit);
+
+    const totalCustomers = await CustomerModel.countDocuments(query);
+    console.log(`Found ${customers.length} customers, total: ${totalCustomers}`);
+
+    // Add profile picture URLs
+    const customersWithUrls = customers.map(customer => {
+      const customerData = customer.toObject();
+      if (customerData.profilePicture && customerData.profilePicture.filename) {
+        customerData.profilePicture.url = `/api/uploads/profile-pictures/${customerData.profilePicture.filename}`;
+      }
+      return customerData;
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        users: customersWithUrls,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(totalCustomers / limit),
+          totalItems: totalCustomers,
+          itemsPerPage: limit
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get all customers error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+
+
+// Get Customer by ID (Admin only)
+module.exports.getCustomerById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const customer = await CustomerModel.findById(id).select('-password');
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Customer not found'
+      });
+    }
+
+    // Add profile picture URL
+    const customerData = customer.toObject();
+    if (customerData.profilePicture && customerData.profilePicture.filename) {
+      customerData.profilePicture.url = `/api/uploads/profile-pictures/${customerData.profilePicture.filename}`;
+    }
+
+    res.status(200).json({
+      success: true,
+      data: { user: customerData }
+    });
+
+  } catch (error) {
+    console.error('Get customer by ID error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+// Delete Customer (Admin only)
+module.exports.deleteCustomer = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const customer = await CustomerModel.findById(id);
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Customer not found'
+      });
+    }
+
+    await CustomerModel.findByIdAndDelete(id);
+
+    res.status(200).json({
+      success: true,
+      message: 'Customer deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Delete customer error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+// Get Customer Statistics (Admin only)
+module.exports.getCustomerStats = async (req, res) => {
+  try {
+    const totalUsers = await CustomerModel.countDocuments();
+
+    // Get users registered this month
+    const thisMonth = new Date();
+    thisMonth.setDate(1);
+    thisMonth.setHours(0, 0, 0, 0);
+
+    const newUsersThisMonth = await CustomerModel.countDocuments({
+      createdAt: { $gte: thisMonth }
+    });
+
+    // Get users registered last month for growth calculation
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+    lastMonth.setDate(1);
+    lastMonth.setHours(0, 0, 0, 0);
+
+    const lastMonthEnd = new Date(thisMonth);
+    lastMonthEnd.setDate(0);
+    lastMonthEnd.setHours(23, 59, 59, 999);
+
+    const newUsersLastMonth = await CustomerModel.countDocuments({
+      createdAt: { $gte: lastMonth, $lte: lastMonthEnd }
+    });
+
+    // Calculate monthly growth
+    const monthlyGrowth = newUsersLastMonth > 0
+      ? ((newUsersThisMonth - newUsersLastMonth) / newUsersLastMonth) * 100
+      : 0;
+
+    // Get active users (users who have logged in recently or have referrals)
+    const activeUsers = await CustomerModel.countDocuments({
+      $or: [
+        { totalReferrals: { $gt: 0 } },
+        { createdAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } } // Last 30 days
+      ]
+    });
+
+    res.status(200).json({
+      success: true,
+      data: {
+        stats: {
+          totalUsers,
+          activeUsers,
+          newUsersThisMonth
+        },
+        totalUsers,
+        monthlyGrowth: Math.round(monthlyGrowth * 100) / 100
+      }
+    });
+
+  } catch (error) {
+    console.error('Get customer stats error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',

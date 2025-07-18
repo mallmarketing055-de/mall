@@ -1,0 +1,147 @@
+### Admin Dashboard API Testing
+
+### Step 1: Create First Admin Account
+POST http://localhost:3000/api/Admin/signup
+Content-Type: application/json
+
+{
+    "username": "admin",
+    "email": "admin@example.com",
+    "password": "admin123"
+}
+
+###
+
+### Step 2: Admin Login
+POST http://localhost:3000/api/Admin/signin
+Content-Type: application/json
+
+{
+    "username": "admin",
+    "password": "admin123"
+}
+
+###
+
+### Step 3: Get All Admins (Use token from Step 2)
+GET http://localhost:3000/api/Admin/all
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_2
+Content-Type: application/json
+
+###
+
+### Step 4: Create Another Admin (Use token from Step 2)
+POST http://localhost:3000/api/Admin/signup
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_2
+Content-Type: application/json
+
+{
+    "username": "admin2",
+    "email": "admin2@example.com",
+    "password": "admin123"
+}
+
+###
+
+### Step 5: Get All Products
+GET http://localhost:3000/api/products
+Content-Type: application/json
+
+###
+
+### Step 6: Create Product (Use token from Step 2)
+POST http://localhost:3000/api/products
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_2
+Content-Type: application/json
+
+{
+    "name": "Test Product",
+    "nameArabic": "منتج تجريبي",
+    "description": "This is a test product",
+    "descriptionArabic": "هذا منتج تجريبي",
+    "price": 99.99,
+    "category": "Electronics",
+    "stock": 50,
+    "image": "test-product.jpg"
+}
+
+###
+
+### Step 7: Get All Customers (Use token from Step 2)
+GET http://localhost:3000/api/customers/all
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_2
+Content-Type: application/json
+
+###
+
+### Step 8: Get Customer Statistics (Use token from Step 2)
+GET http://localhost:3000/api/customers/stats/overview
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_2
+Content-Type: application/json
+
+###
+
+### Step 9: Get All Transactions (Use token from Step 2)
+GET http://localhost:3000/api/transactions
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_2
+Content-Type: application/json
+
+###
+
+### Step 10: Get Transaction Statistics (Use token from Step 2)
+GET http://localhost:3000/api/transactions/stats/overview
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_2
+Content-Type: application/json
+
+###
+
+### Step 11: Create Sample Transaction (Use token from Step 2)
+POST http://localhost:3000/api/transactions
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_2
+Content-Type: application/json
+
+{
+    "customerId": "REPLACE_WITH_ACTUAL_CUSTOMER_ID",
+    "amount": 150.00,
+    "type": "purchase",
+    "description": "Test transaction",
+    "paymentMethod": "credit_card",
+    "items": [
+        {
+            "productId": "TEST001",
+            "productName": "Test Product",
+            "quantity": 2,
+            "price": 75.00,
+            "subtotal": 150.00
+        }
+    ]
+}
+
+###
+
+### Step 12: Export Transactions (Use token from Step 2)
+GET http://localhost:3000/api/transactions/export/csv
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_2
+Content-Type: application/json
+
+###
+
+### Step 13: Search Products
+GET http://localhost:3000/api/products?search=test&category=Electronics&minPrice=50&maxPrice=200
+Content-Type: application/json
+
+###
+
+### Step 14: Search Customers (Use token from Step 2)
+GET http://localhost:3000/api/customers/all?search=ahmed&page=1&limit=10
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_2
+Content-Type: application/json
+
+###
+
+### Step 15: Filter Transactions (Use token from Step 2)
+GET http://localhost:3000/api/transactions?status=completed&type=purchase&minAmount=100&maxAmount=500
+Authorization: Bearer REPLACE_WITH_TOKEN_FROM_STEP_2
+Content-Type: application/json
+
+###

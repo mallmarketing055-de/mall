@@ -1,0 +1,32 @@
+### Step 1: Register a new customer (Parent) - No referral code
+POST http://localhost:3000/api/customers/signup
+Content-Type: application/json
+
+{
+    "name": "Ahmed child",
+    "username": "ahmed_child4",
+    "email": "ahmed.child4@example.com",
+    "password": "password123",
+    "phone": "+966501234567",
+    "Address": "123 Main Street, Riyadh, Saudi Arabia",
+    "DOB": "1990-05-15",
+    "Gender": "male",
+    "communicationType": "both",
+    "referredBy": 433401
+}
+
+###
+
+### Step 2: Login as parent to get JWT token
+POST http://localhost:3000/api/customers/signin
+Content-Type: application/json
+
+{
+    "username": "ahmed_child3",
+    "password": "password123"
+}
+
+### Step 3: Get parent's referral network (Hierarchical Tree Structure)
+GET http://localhost:3000/api/referral/network
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJDdXN0b21lcl9pZCI6IjY4NzQwNDgxNTk3NDU3NzJjN2UyNGUyOCIsInVzZXJuYW1lIjoiYWhtZWRfY2hpbGQzIiwiVHlwZSI6IkN1c3RvbWVyIiwiaWF0IjoxNzUyNDMzODk0LCJleHAiOjE3NTI0Mzc0OTR9.9oofYrpUsZr49Z02TdvXv_3nKdkIKmWRzUd67fsjsZo
+Content-Type: application/json
