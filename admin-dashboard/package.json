@@ -39,8 +39,5 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "https://mall-d62z.onrender.com",
-  "devDependencies": {
-    "vercel": "^47.0.5"
-  }
+  "proxy": "https://mall-d62z.onrender.com"
 }
