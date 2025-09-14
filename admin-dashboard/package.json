@@ -39,7 +39,7 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "http://localhost:3000",
+  "proxy": "https://mall-d62z.onrender.com",
   "devDependencies": {
     "vercel": "^47.0.5"
   }
