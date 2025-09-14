@@ -36,7 +36,7 @@ const PublicRoute = ({ children }) => {
 function App() {
   return (
     <AuthProvider>
-      <Router>
+      <Router basename='/'>
         <div className="App">
           <Routes>
             {/* Public Routes */}
