@@ -3,7 +3,7 @@ import { toast } from 'react-toastify';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
+  baseURL: process.env.REACT_APP_API_URL || 'https://mall-d62z.onrender.com',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
