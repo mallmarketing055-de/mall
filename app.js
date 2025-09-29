@@ -3,6 +3,7 @@ const express = require('express');
 const dotenv = require('dotenv');
 const morgan = require('morgan');
 const path = require('path');
+const cors = require('cors');
 
 const initiateDBConnection = require('./config/db');
 
@@ -26,28 +27,28 @@ app.use(morgan('dev'));
 app.use(express.json());
 // Configure CORS manually for better control
 app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  const allowedOrigins = ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://localhost:3000'];
+    const origin = req.headers.origin;
+    const allowedOrigins = ['http://localhost:3001', 'http://127.0.0.1:3001', 'http://localhost:3000', 'https://mall-front.onrender.com'];
 
-  console.log(`${req.method} ${req.path} - Origin: ${origin}`);
+    console.log(`${req.method} ${req.path} - Origin: ${origin}`);
 
-  if (allowedOrigins.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  }
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
 
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
 
-  if (req.method === 'OPTIONS') {
-    console.log('Preflight request received for:', req.path);
-    console.log('Request headers:', req.headers);
-    res.status(200).end();
-    return;
-  }
+    if (req.method === 'OPTIONS') {
+        console.log('Preflight request received for:', req.path);
+        console.log('Request headers:', req.headers);
+        res.status(200).end();
+        return;
+    }
 
-  next();
+    next();
 });
 
 // Serve static files (uploaded images)
