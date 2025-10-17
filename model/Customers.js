@@ -93,12 +93,18 @@ const customerSchema = new mongoose.Schema({
     length: 6
     // Auto-generated in pre-save middleware, not required in schema
   },
+  // 🟢 Points system
+  points: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
   // Optional: Reference number of the person who invited this user
   referredBy: {
     type: String,
     default: null,
     validate: {
-      validator: function(v) {
+      validator: function (v) {
         // If referredBy is provided, it should be a valid 6-digit reference number
         return !v || /^\d{6}$/.test(v);
       },
@@ -135,7 +141,7 @@ const customerSchema = new mongoose.Schema({
 });
 
 // Generate unique 6-digit reference number before saving
-customerSchema.pre('save', async function(next) {
+customerSchema.pre('save', async function (next) {
   if (this.isNew && !this.referenceNumber) {
     let referenceNumber;
     let isUnique = false;

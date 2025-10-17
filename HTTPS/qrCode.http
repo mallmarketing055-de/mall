@@ -1,0 +1,8 @@
+### Test QR Code generation
+POST http://localhost:3000/api/qrcode/generate
+Content-Type: application/json
+
+{
+  "amount": "150",
+  "username": "MostafaGado"
+}

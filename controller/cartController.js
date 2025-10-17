@@ -1,5 +1,6 @@
 const { validationResult } = require('express-validator');
 const CartModel = require('../model/Cart');
+const CustomerModel = require('../model/Customers');
 
 // Add Item to Cart
 module.exports.addToCart = async (req, res) => {
@@ -29,7 +30,7 @@ module.exports.addToCart = async (req, res) => {
 
     // Find or create cart for customer
     let cart = await CartModel.findOne({ customerId });
-    
+
     if (!cart) {
       cart = new CartModel({ customerId, items: [] });
     }
@@ -292,6 +293,65 @@ module.exports.clearCart = async (req, res) => {
 
   } catch (error) {
     console.error('Clear cart error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+module.exports.checkout = async (req, res) => {
+  try {
+    const customerId = req.user.Customer_id;
+
+    // Find cart for customer
+    const cart = await CartModel.findOne({ customerId });
+
+    if (!cart || cart.items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Cart is empty or not found'
+      });
+    }
+
+    // Calculate reward points: 10 points per 1000 L.S
+    const totalAmount = cart.totalAmount || 0;
+    const earnedPoints = Math.floor(totalAmount / 1000) * 10;
+
+    // Update customer points
+    const customer = await CustomerModel.findById(customerId);
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Customer not found'
+      });
+    }
+
+    customer.points += earnedPoints;
+    await customer.save();
+
+    // Optionally: clear cart after checkout
+    await cart.clearCart();
+
+    res.status(200).json({
+      success: true,
+      message: 'Checkout successful',
+      data: {
+        totalAmount,
+        earnedPoints,
+        totalPoints: customer.points,
+        cart: {
+          cartId: cart._id,
+          totalItems: 0,
+          totalAmount: 0,
+          items: []
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Checkout error:', error);
     res.status(500).json({
       success: false,
       message: 'Internal server error',

@@ -5,7 +5,6 @@ const CustomerModel = require('../model/Customers');
 // Customer Signup
 module.exports.signup = async (req, res) => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -37,7 +36,6 @@ module.exports.signup = async (req, res) => {
 
     // Validate referral code if provided
     if (referredBy) {
-      // Check if referral code is valid 6-digit number
       if (!/^\d{6}$/.test(referredBy)) {
         return res.status(400).json({
           success: false,
@@ -45,7 +43,6 @@ module.exports.signup = async (req, res) => {
         });
       }
 
-      // Check if referral code exists
       const referralExists = await authService.doesReferralCodeExist(referredBy);
       if (!referralExists) {
         return res.status(400).json({
@@ -74,7 +71,7 @@ module.exports.signup = async (req, res) => {
       };
     }
 
-    // Create new user
+    // 🟢 Create new user with initial points = 0
     const customerInfo = {
       name,
       username,
@@ -86,7 +83,8 @@ module.exports.signup = async (req, res) => {
       Gender,
       communicationType,
       profilePicture: profilePictureData,
-      referredBy: referredBy || null
+      referredBy: referredBy || null,
+      points: 0 // ✅ Add this line for initial points
     };
 
     const newUser = await authService.createUser(customerInfo);
@@ -110,6 +108,7 @@ module.exports.signup = async (req, res) => {
           communicationType: newUser.communicationType,
           referenceNumber: newUser.referenceNumber,
           referralLevel: newUser.referralLevel,
+          points: newUser.points, // ✅ Return it in response
           profilePicture: {
             filename: newUser.profilePicture.filename,
             url: `/api/uploads/profile-pictures/${newUser.profilePicture.filename}`
@@ -129,6 +128,7 @@ module.exports.signup = async (req, res) => {
   }
 };
 
+
 // Customer Login
 module.exports.login = async (req, res) => {
   try {
@@ -146,7 +146,7 @@ module.exports.login = async (req, res) => {
 
     // Check credentials
     const customer = await authService.checkCredentials(username, password);
-    
+
     if (!customer) {
       return res.status(401).json({
         success: false,
