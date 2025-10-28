@@ -11,8 +11,10 @@ import {
 } from 'react-icons/fa';
 import { userAPI, productAPI, transactionAPI, adminAPI } from '../services/api';
 import { toast } from 'react-toastify';
+import { useTranslation } from "react-i18next"; // ✅ الترجمة
 
 const Dashboard = () => {
+    const { t } = useTranslation(); // ✅ استخدم الترجمة
   const [stats, setStats] = useState({
     users: { total: 0, change: 0 },
     products: { total: 0, change: 0 },
@@ -199,7 +201,7 @@ const Dashboard = () => {
           {(change || 0) >= 0 ? <FaArrowUp /> : <FaArrowDown />}
           <span>{Math.abs(change || 0)}%</span>
         </div>
-        <span className="stat-period">vs last month</span>
+        <span className="stat-period">{t("dashboardPage.vsLastMonth")}</span>
       </div>
     </div>
   );
@@ -207,7 +209,7 @@ const Dashboard = () => {
   if (loading) {
     return (
       <Layout>
-        <div className="loading">Loading dashboard...</div>
+        <div className="loading">t("dashboardPage.loading")</div>
       </Layout>
     );
   }
@@ -218,7 +220,7 @@ const Dashboard = () => {
         {/* Stats Grid */}
         <div className="stats-grid">
           <StatCard
-            title="Total Users"
+            title={t("dashboardPage.totalUsers")}
             value={stats.users.total}
             change={stats.users.change}
             icon={FaUsers}
@@ -226,7 +228,7 @@ const Dashboard = () => {
             colorEnd="#1d4ed8"
           />
           <StatCard
-            title="Total Products"
+            title={t("dashboardPage.totalProducts")}
             value={stats.products.total}
             change={stats.products.change}
             icon={FaBox}
@@ -234,7 +236,7 @@ const Dashboard = () => {
             colorEnd="#d97706"
           />
           <StatCard
-            title="Total Transactions"
+            title={t("dashboardPage.totalTransactions")}
             value={stats.transactions.total}
             change={stats.transactions.change}
             icon={FaReceipt}
@@ -242,7 +244,7 @@ const Dashboard = () => {
             colorEnd="#7c3aed"
           />
           <StatCard
-            title="Total Admins"
+            title={t("dashboardPage.totalAdmins")}
             value={stats.admins.total}
             change={stats.admins.change}
             icon={FaUserShield}
@@ -255,24 +257,24 @@ const Dashboard = () => {
         <div className="dashboard-section">
           <div className="card">
             <div className="card-header">
-              <h2 className="card-title">Recent Transactions</h2>
+              <h2 className="card-title">{t("dashboardPage.recentTransactions")}</h2>
               <a href="/transactions" className="btn btn-primary btn-sm">
-                <FaEye /> View All
+                <FaEye /> {t("dashboardPage.viewAll")}
               </a>
             </div>
             
             {loading ? (
-              <div className="loading">Loading recent transactions...</div>
+              <div className="loading">{t("dashboardPage.loading")}</div>
             ) : recentTransactions.length > 0 ? (
               <div className="table-responsive">
                 <table className="table">
                   <thead>
                     <tr>
-                      <th>Transaction ID</th>
-                      <th>User</th>
-                      <th>Amount</th>
-                      <th>Status</th>
-                      <th>Date</th>
+                      <th>{t("Transaction ID")}</th>
+                      <th>{t("User")}</th>
+                      <th>{t("Amount")}</th>
+                      <th>{t("Status")}</th>
+                      <th>{t("Date")}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -295,8 +297,9 @@ const Dashboard = () => {
             ) : (
               <div className="empty-state">
                 <FaReceipt />
-                <p>No recent transactions found</p>
-                <p>Debug: Transactions array length: {recentTransactions.length}</p>
+                <p>{t("dashboardPage.noRecentTransactions")}</p>
+                <p>{t("dashboardPage.debugTransactions", { count: recentTransactions.length })}</p>
+
               </div>
             )}
           </div>

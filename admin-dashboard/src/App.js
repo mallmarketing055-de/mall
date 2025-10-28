@@ -10,6 +10,7 @@ import AdminManagement from './components/AdminManagement';
 import ProductManagement from './components/ProductManagement';
 import UserManagement from './components/UserManagement';
 import TransactionManagement from './components/TransactionManagement';
+import "./i18n"; // <-- make sure this is here
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -34,8 +35,11 @@ const PublicRoute = ({ children }) => {
 };
 
 function App() {
+
+
   return (
     <AuthProvider>
+      
       <Router basename='/'>
         <div className="App">
           <Routes>

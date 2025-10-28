@@ -3,8 +3,10 @@ import Layout from './Layout';
 import { FaPlus, FaEdit, FaTrash, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { adminAPI } from '../services/api';
 import { toast } from 'react-toastify';
+import { useTranslation } from "react-i18next";
 
 const AdminManagement = () => {
+  const { t } = useTranslation();
   const [admins, setAdmins] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -47,7 +49,7 @@ const AdminManagement = () => {
     } catch (error) {
       console.error('Error fetching admins:', error);
       console.error('Error details:', error.response?.data);
-      toast.error('Failed to fetch admins: ' + (error.response?.data?.message || error.message));
+      toast.error(t("adminPage.fetchFailed") + (error.response?.data?.message || error.message));
     } finally {
       setLoading(false);
     }
@@ -84,7 +86,7 @@ const AdminManagement = () => {
 
     try {
       await adminAPI.deleteAdmin(adminId);
-      toast.success('Admin deleted successfully');
+      toast.success(t("adminPage.updatedSuccess"));
       fetchAdmins();
     } catch (error) {
       console.error('Error deleting admin:', error);
@@ -96,19 +98,19 @@ const AdminManagement = () => {
     const newErrors = {};
     
     if (!formData.username.trim()) {
-      newErrors.username = 'Username is required';
+      newErrors.username = t("adminPage.usernameRequired");
     }
     
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email =  t("adminPage.emailRequired");
     } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
+      newErrors.email = t("adminPage.emailInvalid");
     }
     
     if (!editingAdmin && !formData.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password =  t("adminPage.passwordRequired");
     } else if (formData.password && formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters';
+      newErrors.password = t("adminPage.passwordMinLength");
     }
     
     setErrors(newErrors);
@@ -148,38 +150,22 @@ const AdminManagement = () => {
       <div className="admin-management">
         <div className="page-header">
           <button className="btn btn-primary" onClick={() => openModal()}>
-            <FaPlus /> Add New Admin
+            <FaPlus /> {t("adminPage.addAdmin")}
           </button>
         </div>
 
         {loading ? (
-          <div className="loading">Loading admins...</div>
+          <div className="loading">{t("adminPage.loadingAdmins")}</div>
         ) : (
           <div className="modern-table-container">
             <div className="table-wrapper">
               <table className="modern-table">
                 <thead>
                   <tr>
-                    <th>
-                      <div className="th-content">
-                        <span>Admin Profile</span>
-                      </div>
-                    </th>
-                    <th>
-                      <div className="th-content">
-                        <span>Email Address</span>
-                      </div>
-                    </th>
-                    <th>
-                      <div className="th-content">
-                        <span>Created Date</span>
-                      </div>
-                    </th>
-                    <th>
-                      <div className="th-content">
-                        <span>Actions</span>
-                      </div>
-                    </th>
+                    <th><span>{t("adminPage.adminProfile")}</span></th>
+                    <th><span>{t("adminPage.emailAddress")}</span></th>
+                    <th><span>{t("adminPage.createdDate")}</span></th>
+                    <th><span>{t("adminPage.actions")}</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -192,7 +178,7 @@ const AdminManagement = () => {
                           </div>
                           <div className="admin-info">
                             <div className="admin-name">{admin.username}</div>
-                            <div className="admin-role">Administrator</div>
+                            <div className="admin-role">{t("adminPage.administrator")}</div>
                           </div>
                         </div>
                       </td>
@@ -235,7 +221,7 @@ const AdminManagement = () => {
               
               {admins.length === 0 && (
                 <div className="empty-state">
-                  <p>No admins found</p>
+                  <p>{t("adminPage.noAdminsFound")}</p>
                 </div>
               )}
             </div>
@@ -247,13 +233,13 @@ const AdminManagement = () => {
           <div className="modal-overlay" onClick={closeModal}>
             <div className="modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
-                <h2>{editingAdmin ? 'Edit Admin' : 'Add New Admin'}</h2>
+                <h2>{editingAdmin ? t("adminPage.editAdmin") : t("adminPage.addAdmin")}</h2>
                 <button className="modal-close" onClick={closeModal}>×</button>
               </div>
               
               <form onSubmit={handleSubmit} className="modal-body">
                 <div className="form-group">
-                  <label className="form-label">Username</label>
+                  <label className="form-label">{t("adminPage.username")}</label>
                   <input
                     type="text"
                     name="username"
@@ -266,7 +252,7 @@ const AdminManagement = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Email</label>
+                  <label className="form-label">{t("adminPage.email")}</label>
                   <input
                     type="email"
                     name="email"
@@ -280,7 +266,7 @@ const AdminManagement = () => {
 
                 <div className="form-group">
                   <label className="form-label">
-                    Password {editingAdmin && '(leave blank to keep current)'}
+                    {t("adminPage.password")}{" "}{editingAdmin && `(${t("adminPage.passwordNote")})`}
                   </label>
                   <div className="password-input">
                     <input
@@ -304,10 +290,10 @@ const AdminManagement = () => {
 
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                    Cancel
+                    {t("adminPage.cancel")}
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    {editingAdmin ? 'Update' : 'Create'} Admin
+                    {editingAdmin ? t("adminPage.updateAdmin") : t("adminPage.createAdmin")}
                   </button>
                 </div>
               </form>

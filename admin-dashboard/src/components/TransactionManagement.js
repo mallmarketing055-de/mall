@@ -3,8 +3,10 @@ import Layout from './Layout';
 import { FaSearch, FaEye, FaDownload, FaFilter, FaReceipt } from 'react-icons/fa';
 import { transactionAPI } from '../services/api';
 import { toast } from 'react-toastify';
+import { useTranslation } from "react-i18next";
 
 const TransactionManagement = () => {
+  const { t } = useTranslation();
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -58,7 +60,7 @@ const TransactionManagement = () => {
     } catch (error) {
       console.error('Error fetching transactions:', error);
       console.error('Error details:', error.response);
-      toast.error('Failed to fetch transactions');
+      toast.error(t("transactionsPage.errorFetch") || "Failed to fetch transactions");
     } finally {
       setLoading(false);
     }
@@ -179,40 +181,18 @@ const TransactionManagement = () => {
 
         {/* Stats Cards */}
         <div className="stats-grid">
-          <StatCard
-            title="Total Transactions"
-            value={stats.totalTransactions}
-            icon={FaReceipt}
-            color="#007bff"
-          />
-          <StatCard
-            title="Total Amount"
-            value={stats.totalAmount}
-            icon={FaReceipt}
-            color="#28a745"
-            format="currency"
-          />
-          <StatCard
-            title="Completed"
-            value={stats.completedTransactions}
-            icon={FaReceipt}
-            color="#17a2b8"
-          />
-          <StatCard
-            title="Pending"
-            value={stats.pendingTransactions}
-            icon={FaReceipt}
-            color="#ffc107"
-          />
-        </div>
-
+       <StatCard title={t("transactionsPage.totalTransactions")} value={stats.totalTransactions} icon={FaReceipt} color="#007bff" />
+          <StatCard title={t("transactionsPage.totalAmount")} value={stats.totalAmount} icon={FaReceipt} color="#28a745" format="currency" />
+          <StatCard title={t("transactionsPage.completed")} value={stats.completedTransactions} icon={FaReceipt} color="#17a2b8" />
+          <StatCard title={t("transactionsPage.pending")} value={stats.pendingTransactions} icon={FaReceipt} color="#ffc107" />
+</div>
         {/* Search Bar with Action Buttons */}
         <div className="search-bar-container">
           <div className="search-input">
             <FaSearch className="search-icon" />
             <input
               type="text"
-              placeholder="Search transactions by ID, user, or amount..."
+              placeholder={t("transactionsPage.searchPlaceholder")}
               value={searchTerm}
               onChange={handleSearch}
               className="form-control"
@@ -223,13 +203,13 @@ const TransactionManagement = () => {
               className="btn btn-secondary"
               onClick={() => setShowFilters(!showFilters)}
             >
-              <FaFilter /> Filters
+              <FaFilter /> {t("transactionsPage.filters")}
             </button>
             <button
               className="btn btn-success"
               onClick={handleExportTransactions}
             >
-              <FaDownload /> Export
+              <FaDownload /> {t("transactionsPage.export")}
             </button>
           </div>
         </div>
@@ -239,22 +219,22 @@ const TransactionManagement = () => {
           <div className="filters-panel">
             <div className="filters-grid">
               <div className="form-group">
-                <label>Status</label>
+                <label>{t("transactionsPage.status")}</label>
                 <select
                   name="status"
                   value={filters.status}
                   onChange={handleFilterChange}
                   className="form-control"
                 >
-                  <option value="">All Statuses</option>
-                  <option value="completed">Completed</option>
-                  <option value="pending">Pending</option>
-                  <option value="failed">Failed</option>
+                  <option value="">{t("transactionsPage.allStatuses")}</option>
+                  <option value="completed">{t("transactionsPage.completed")}</option>
+                  <option value="pending">{t("transactionsPage.pending")}</option>
+                  <option value="failed">{t("transactionsPage.failed")}</option>
                 </select>
               </div>
               
               <div className="form-group">
-                <label>Date From</label>
+                <label>{t("transactionsPage.dateFrom")}</label>
                 <input
                   type="date"
                   name="dateFrom"
@@ -265,7 +245,7 @@ const TransactionManagement = () => {
               </div>
               
               <div className="form-group">
-                <label>Date To</label>
+                <label>{t("transactionsPage.dateTo")}</label>
                 <input
                   type="date"
                   name="dateTo"
@@ -276,7 +256,7 @@ const TransactionManagement = () => {
               </div>
               
               <div className="form-group">
-                <label>Min Amount</label>
+                <label>{t("transactionsPage.minAmount")}</label>
                 <input
                   type="number"
                   step="0.01"
@@ -289,7 +269,7 @@ const TransactionManagement = () => {
               </div>
               
               <div className="form-group">
-                <label>Max Amount</label>
+                <label>{t("transactionsPage.maxAmount")}</label>
                 <input
                   type="number"
                   step="0.01"
@@ -307,7 +287,7 @@ const TransactionManagement = () => {
                   className="btn btn-secondary"
                   onClick={clearFilters}
                 >
-                  Clear Filters
+                  {t("transactionsPage.clearFilters")}
                 </button>
               </div>
             </div>
@@ -315,7 +295,7 @@ const TransactionManagement = () => {
         )}
 
         {loading ? (
-          <div className="loading">Loading transactions...</div>
+           <div className="loading">{t("transactionsPage.loading")}</div>
         ) : (
           <>
             <div className="modern-table-container">
@@ -325,32 +305,37 @@ const TransactionManagement = () => {
                     <tr>
                       <th>
                         <div className="th-content">
-                          <span>Transaction Info</span>
+                          <span>{t("transactionsPage.id")}</span>
                         </div>
                       </th>
                       <th>
                         <div className="th-content">
-                          <span>User Details</span>
+                          <span>{t("transactionsPage.transactionInfo")}</span>
                         </div>
                       </th>
                       <th>
                         <div className="th-content">
-                          <span>Amount</span>
+                          <span>{t("transactionsPage.userDetails")}</span>
                         </div>
                       </th>
                       <th>
                         <div className="th-content">
-                          <span>Status & Type</span>
+                          <span>{t("transactionsPage.amount")}</span>
                         </div>
                       </th>
                       <th>
                         <div className="th-content">
-                          <span>Date</span>
+                          <span>{t("transactionsPage.statusType")}</span>
                         </div>
                       </th>
                       <th>
                         <div className="th-content">
-                          <span>Actions</span>
+                          <span>{t("transactionsPage.date")}</span>
+                        </div>
+                      </th>
+                      <th>
+                        <div className="th-content">
+                          <span>{t("transactionsPage.actions")}</span>
                         </div>
                       </th>
                     </tr>
@@ -359,6 +344,11 @@ const TransactionManagement = () => {
                     {transactions.map((transaction) => (
                       <tr key={transaction._id || transaction.id} className="table-row">
                         <td className="transaction-info-cell">
+                           <td className="amount-cell">
+                          <div className="amount-info">
+                            <span className="amount-value">${transaction._id || 'NAN'}</span>
+                          </div>
+                        </td>
                           <div className="transaction-avatar">
                             <div className="transaction-icon">
                               <FaReceipt />
@@ -418,7 +408,7 @@ const TransactionManagement = () => {
                 {transactions.length === 0 && !loading && (
                   <div className="empty-state">
                     <FaReceipt />
-                    <p>No transactions found</p>
+                    <p>{t("transactionsPage.noTransactions")}</p>
                     <p>Debug: Transactions array length: {transactions.length}</p>
                   </div>
                 )}
@@ -433,17 +423,17 @@ const TransactionManagement = () => {
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                 >
-                  Previous
+                  {t("transactionsPage.previous")}
                 </button>
                 <span className="page-info">
-                  Page {currentPage} of {totalPages}
+                  {t("transactionsPage.pageOf", { currentPage, totalPages })}
                 </span>
                 <button
                   className="btn btn-secondary"
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
                 >
-                  Next
+                  {t("transactionsPage.next")}
                 </button>
               </div>
             )}
@@ -455,7 +445,7 @@ const TransactionManagement = () => {
           <div className="modal-overlay" onClick={closeModal}>
             <div className="modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
-                <h2>Transaction Details</h2>
+                <h2>{t("transactionsPage.detailsTitle")}</h2>
                 <button className="modal-close" onClick={closeModal}>×</button>
               </div>
               

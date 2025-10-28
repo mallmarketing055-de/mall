@@ -13,42 +13,44 @@ import {
   FaUser
 } from 'react-icons/fa';
 import './Layout.css';
+import { useTranslation } from 'react-i18next';
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { admin, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const menuItems = [
     {
       path: '/dashboard',
       icon: FaTachometerAlt,
-      label: 'Dashboard',
+      label: t('dashboard'),
       color: '#007bff'
     },
     {
       path: '/admin-management',
       icon: FaUserShield,
-      label: 'Admin Management',
+      label: t('admin_management'),
       color: '#28a745'
     },
     {
       path: '/products',
       icon: FaBox,
-      label: 'Product Management',
+      label: t('product_management'),
       color: '#ffc107'
     },
     {
       path: '/users',
       icon: FaUsers,
-      label: 'User Management',
+      label: t('user_management'),
       color: '#17a2b8'
     },
     {
       path: '/transactions',
       icon: FaReceipt,
-      label: 'Transaction Management',
+      label: t('transaction_management'),
       color: '#6f42c1'
     }
   ];
@@ -66,6 +68,11 @@ const Layout = ({ children }) => {
     setSidebarOpen(false);
   };
 
+  const changeLanguage = (lang) => {
+    i18n.changeLanguage(lang);
+    document.dir = lang === 'ar' ? 'rtl' : 'ltr';
+  };
+
   return (
     <div className="layout">
       {/* Sidebar */}
@@ -73,8 +80,14 @@ const Layout = ({ children }) => {
         <div className="sidebar-header">
           <div className="logo-container">
             <img src="/assets/logo.svg" alt="Mall Marketing Logo" className="admin-logo" />
-            <h2>Admin Panel</h2>
+            <h2>{t('admin_panel')}</h2>
           </div>
+
+          <div className="App">
+            <button onClick={() => changeLanguage("en")}>{t("english")}</button>
+            <button onClick={() => changeLanguage("ar")}>{t("arabic")}</button>
+          </div>
+
           <button className="sidebar-close" onClick={closeSidebar}>
             <FaTimes />
           </button>
@@ -104,13 +117,15 @@ const Layout = ({ children }) => {
           <div className="admin-info">
             <FaUser className="admin-avatar" />
             <div className="admin-details">
-              <span className="admin-name">{admin?.username ? admin.username.charAt(0).toUpperCase() + admin.username.slice(1) : 'Admin'}</span>
-              <span className="admin-email">{admin?.email}</span>
+              <span className="admin-name">
+                {admin?.username ? admin.username.charAt(0).toUpperCase() + admin.username.slice(1) : t('logged_in_as')}
+              </span>
+              <span className="admin-email">{admin?.email || t('email')}</span>
             </div>
           </div>
           <button className="logout-btn" onClick={handleLogout}>
             <FaSignOutAlt />
-            <span>Logout</span>
+            <span>{t("logout")}</span>
           </button>
         </div>
       </aside>
@@ -124,13 +139,15 @@ const Layout = ({ children }) => {
           </button>
           
           <div className="header-title">
-            <h1>{menuItems.find(item => item.path === location.pathname)?.label || 'Dashboard'}</h1>
+            <h1>{menuItems.find(item => item.path === location.pathname)?.label || t('dashboard')}</h1>
           </div>
           
           <div className="header-actions">
             <div className="admin-profile">
               <FaUser className="profile-icon" />
-              <span className="profile-name">{admin?.username ? admin.username.charAt(0).toUpperCase() + admin.username.slice(1) : 'Admin'}</span>
+              <span className="profile-name">
+                {admin?.username ? admin.username.charAt(0).toUpperCase() + admin.username.slice(1) : t('logged_in_as')}
+              </span>
             </div>
             <button className="logout-btn-header" onClick={handleLogout}>
               <FaSignOutAlt />

@@ -3,8 +3,10 @@ import Layout from './Layout';
 import { FaTrash, FaSearch, FaEye, FaUsers } from 'react-icons/fa';
 import { userAPI } from '../services/api';
 import { toast } from 'react-toastify';
+import { useTranslation } from "react-i18next";
 
 const UserManagement = () => {
+  const { t } = useTranslation();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -158,269 +160,308 @@ const UserManagement = () => {
 
   return (
     <Layout>
-      <div className="user-management">
-        {/* Stats Cards */}
-        <div className="stats-grid">
-          <StatCard
-            title="Total Users"
-            value={stats.totalUsers}
-            icon={FaUsers}
-            color="#007bff"
-          />
-          <StatCard
-            title="Active Users"
-            value={stats.activeUsers}
-            icon={FaUsers}
-            color="#28a745"
-          />
-          <StatCard
-            title="New This Month"
-            value={stats.newUsersThisMonth}
-            icon={FaUsers}
-            color="#17a2b8"
-          />
-        </div>
+<div className="user-management">
+  {/* Stats Cards */}
+  <div className="stats-grid">
+    <StatCard
+      title={t("usersPage.totalUsers")}
+      value={stats.totalUsers}
+      icon={FaUsers}
+      color="#007bff"
+    />
+    <StatCard
+      title={t("usersPage.activeUsers")}
+      value={stats.activeUsers}
+      icon={FaUsers}
+      color="#28a745"
+    />
+    <StatCard
+      title={t("usersPage.newThisMonth")}
+      value={stats.newUsersThisMonth}
+      icon={FaUsers}
+      color="#17a2b8"
+    />
+  </div>
 
-        {/* Search Bar */}
-        <div className="search-bar">
-          <div className="search-input">
-            <FaSearch className="search-icon" />
-            <input
-              type="text"
-              placeholder="Search users by name, email, or username..."
-              value={searchTerm}
-              onChange={handleSearch}
-              className="form-control"
-            />
-          </div>
-        </div>
+  {/* Search Bar */}
+  <div className="search-bar">
+    <div className="search-input">
+      <FaSearch className="search-icon" />
+      <input
+        type="text"
+        placeholder={t("usersPage.searchPlaceholder")}
+        value={searchTerm}
+        onChange={handleSearch}
+        className="form-control"
+      />
+    </div>
+  </div>
 
-        {loading ? (
-          <div className="loading">Loading users...</div>
-        ) : (
-          <>
-            <div className="modern-table-container">
-              <div className="table-wrapper">
-                <table className="modern-table">
-                  <thead>
-                    <tr>
-                      <th>
-                        <div className="th-content">
-                          <span>User Profile</span>
-                        </div>
-                      </th>
-                      <th>
-                        <div className="th-content">
-                          <span>Contact Info</span>
-                        </div>
-                      </th>
-                      <th>
-                        <div className="th-content">
-                          <span>Referral System</span>
-                        </div>
-                      </th>
-                      <th>
-                        <div className="th-content">
-                          <span>Joined Date</span>
-                        </div>
-                      </th>
-                      <th>
-                        <div className="th-content">
-                          <span>Actions</span>
-                        </div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((user) => (
-                      <tr key={user._id || user.id} className="table-row">
-                        <td className="user-profile-cell">
-                          <div className="user-avatar">
-                            <div className="avatar-circle">
-                              {(user.name || 'U').charAt(0).toUpperCase()}
-                            </div>
-                            <div className="user-info">
-                              <div className="user-name">{user.name || 'N/A'}</div>
-                              <div className="user-username">@{user.username || 'N/A'}</div>
-                              <div className="user-gender">
-                                <span className={`gender-badge ${(user.Gender || user.gender || '').toLowerCase()}`}>
-                                  {user.Gender || user.gender || 'N/A'}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="contact-cell">
-                          <div className="contact-info">
-                            <div className="email-info">
-                              <span className="contact-label">Email:</span>
-                              <span className="contact-value">{user.email || 'N/A'}</span>
-                            </div>
-                            <div className="phone-info">
-                              <span className="contact-label">Phone:</span>
-                              <span className="contact-value">{user.phone || 'N/A'}</span>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="referral-cell">
-                          <div className="referral-info">
-                            <div className="referral-item">
-                              <span className="referral-label">Parent:</span>
-                              {user.referredBy ? (
-                                <span className="reference-parent">
-                                  {user.referredBy}
-                                </span>
-                              ) : (
-                                <span className="no-reference">No Referral</span>
-                              )}
-                            </div>
-                            <div className="referral-item">
-                              <span className="referral-label">My Code:</span>
-                              {user.referenceNumber ? (
-                                <span className="reference-number">
-                                  {user.referenceNumber}
-                                </span>
-                              ) : (
-                                <span className="no-reference">Not Generated</span>
-                              )}
-                            </div>
-                          </div>
-                        </td>
-                        <td className="date-cell">
-                          <div className="date-info">
-                            {user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-US', {
-                              year: 'numeric',
-                              month: 'short',
-                              day: 'numeric'
-                            }) : 'N/A'}
-                          </div>
-                        </td>
-                        <td className="actions-cell">
-                          <div className="action-buttons">
-                            <button
-                              className="action-btn view-btn"
-                              onClick={() => handleViewUser(user._id || user.id)}
-                              title="View Details"
-                            >
-                              <FaEye />
-                            </button>
-                            <button
-                              className="action-btn delete-btn"
-                              onClick={() => handleDelete(user._id || user.id)}
-                              title="Delete User"
-                            >
-                              <FaTrash />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-                
-                {users.length === 0 && (
-                  <div className="empty-state">
-                    <FaUsers />
-                    <p>No users found</p>
+  {loading ? (
+    <div className="loading">{t("usersPage.loading")}</div>
+  ) : (
+    <>
+      <div className="modern-table-container">
+        <div className="table-wrapper">
+          <table className="modern-table">
+            <thead>
+              <tr>
+                <th>
+                  <div className="th-content">
+                    <span>{t("usersPage.id")}</span>
                   </div>
-                )}
-              </div>
+                </th>
+                <th>
+                  <div className="th-content">
+                    <span>{t("usersPage.userProfile")}</span>
+                  </div>
+                </th>
+                <th>
+                  <div className="th-content">
+                    <span>{t("usersPage.contactInfo")}</span>
+                  </div>
+                </th>
+                <th>
+                  <div className="th-content">
+                    <span>{t("usersPage.referralSystem")}</span>
+                  </div>
+                </th>
+                <th>
+                  <div className="th-content">
+                    <span>{t("usersPage.joinedDate")}</span>
+                  </div>
+                </th>
+                <th>
+                  <div className="th-content">
+                    <span>{t("usersPage.actions")}</span>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr key={user._id || user.id} className="table-row">
+                  <td>
+                    <div className="date-info">
+                      {user._id ? user._id : t("usersPage.noData")}
+                    </div>
+                  </td>
+                  <td className="user-profile-cell">
+                    <div className="user-avatar">
+                      <div className="avatar-circle">
+                        {(user.name || "U").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="user-info">
+                        <div className="user-name">
+                          {user.name || t("usersPage.noData")}
+                        </div>
+                        <div className="user-username">
+                          @{user.username || t("usersPage.noData")}
+                        </div>
+                        <div className="user-gender">
+                          <span
+                            className={`gender-badge ${(user.Gender || user.gender || "").toLowerCase()}`}
+                          >
+                            {user.Gender || user.gender || t("usersPage.noData")}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="contact-cell">
+                    <div className="contact-info">
+                      <div className="email-info">
+                        <span className="contact-label">{t("usersPage.email")}:</span>
+                        <span className="contact-value">
+                          {user.email || t("usersPage.noData")}
+                        </span>
+                      </div>
+                      <div className="phone-info">
+                        <span className="contact-label">{t("usersPage.phone")}:</span>
+                        <span className="contact-value">
+                          {user.phone || t("usersPage.noData")}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="referral-cell">
+                    <div className="referral-info">
+                      <div className="referral-item">
+                        <span className="referral-label">{t("usersPage.parent")}:</span>
+                        {user.referredBy ? (
+                          <span className="reference-parent">{user.referredBy}</span>
+                        ) : (
+                          <span className="no-reference">
+                            {t("usersPage.noReferral")}
+                          </span>
+                        )}
+                      </div>
+                      <div className="referral-item">
+                        <span className="referral-label">{t("usersPage.myCode")}:</span>
+                        {user.referenceNumber ? (
+                          <span className="reference-number">
+                            {user.referenceNumber}
+                          </span>
+                        ) : (
+                          <span className="no-reference">
+                            {t("usersPage.notGenerated")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </td>
+                  <td className="date-cell">
+                    <div className="date-info">
+                      {user.createdAt
+                        ? new Date(user.createdAt).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "short",
+                            day: "numeric",
+                          })
+                        : t("usersPage.noData")}
+                    </div>
+                  </td>
+                  <td className="actions-cell">
+                    <div className="action-buttons">
+                      <button
+                        className="action-btn view-btn"
+                        onClick={() => handleViewUser(user._id || user.id)}
+                        title={t("usersPage.viewDetails")}
+                      >
+                        <FaEye />
+                      </button>
+                      <button
+                        className="action-btn delete-btn"
+                        onClick={() => handleDelete(user._id || user.id)}
+                        title={t("usersPage.deleteUser")}
+                      >
+                        <FaTrash />
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {users.length === 0 && (
+            <div className="empty-state">
+              <FaUsers />
+              <p>{t("usersPage.noUsersFound")}</p>
             </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="pagination">
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
-                  disabled={currentPage === 1}
-                >
-                  Previous
-                </button>
-                <span className="page-info">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  className="btn btn-secondary"
-                  onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
-                  disabled={currentPage === totalPages}
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </>
-        )}
-
-        {/* User Details Modal */}
-        {showModal && selectedUser && (
-          <div className="modal-overlay" onClick={closeModal}>
-            <div className="modal" onClick={(e) => e.stopPropagation()}>
-              <div className="modal-header">
-                <h2>User Details</h2>
-                <button className="modal-close" onClick={closeModal}>×</button>
-              </div>
-              
-              <div className="modal-body">
-                <div className="user-details">
-                  <div className="detail-row">
-                    <label>Name:</label>
-                    <span>{selectedUser.name || 'N/A'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Username:</label>
-                    <span>{selectedUser.username || 'N/A'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Email:</label>
-                    <span>{selectedUser.email || 'N/A'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Phone:</label>
-                    <span>{selectedUser.phone || 'N/A'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Gender:</label>
-                    <span className="capitalize">{selectedUser.Gender || selectedUser.gender || 'N/A'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Date of Birth:</label>
-                    <span>{selectedUser.DOB ? new Date(selectedUser.DOB).toLocaleDateString() : 'N/A'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Address:</label>
-                    <span>{selectedUser.Address || 'N/A'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Communication Type:</label>
-                    <span className="capitalize">{selectedUser.communicationType || 'N/A'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Reference Number:</label>
-                    <span>{selectedUser.referenceNumber || 'N/A'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Referred By:</label>
-                    <span>{selectedUser.referredBy || 'N/A'}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Referral Level:</label>
-                    <span>{selectedUser.referralLevel || 0}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Total Referrals:</label>
-                    <span>{selectedUser.totalReferrals || 0}</span>
-                  </div>
-                  <div className="detail-row">
-                    <label>Joined Date:</label>
-                    <span>{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleString() : 'N/A'}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="pagination">
+          <button
+            className="btn btn-secondary"
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+          >
+            {t("usersPage.previous")}
+          </button>
+          <span className="page-info">
+            {t("usersPage.pageInfo", { current: currentPage, total: totalPages })}
+          </span>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages}
+          >
+            {t("usersPage.next")}
+          </button>
+        </div>
+      )}
+    </>
+  )}
+
+  {/* User Details Modal */}
+  {showModal && selectedUser && (
+    <div className="modal-overlay" onClick={closeModal}>
+      <div className="modal" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <h2>{t("usersPage.userDetails")}</h2>
+          <button className="modal-close" onClick={closeModal}>
+            ×
+          </button>
+        </div>
+
+        <div className="modal-body">
+          <div className="user-details">
+            <div className="detail-row">
+              <label>{t("usersPage.name")}:</label>
+              <span>{selectedUser.name || t("usersPage.noData")}</span>
+            </div>
+            <div className="detail-row">
+              <label>{t("usersPage.username")}:</label>
+              <span>{selectedUser.username || t("usersPage.noData")}</span>
+            </div>
+            <div className="detail-row">
+              <label>{t("usersPage.email")}:</label>
+              <span>{selectedUser.email || t("usersPage.noData")}</span>
+            </div>
+            <div className="detail-row">
+              <label>{t("usersPage.phone")}:</label>
+              <span>{selectedUser.phone || t("usersPage.noData")}</span>
+            </div>
+            <div className="detail-row">
+              <label>{t("usersPage.gender")}:</label>
+              <span className="capitalize">
+                {selectedUser.Gender || selectedUser.gender || t("usersPage.noData")}
+              </span>
+            </div>
+            <div className="detail-row">
+              <label>{t("usersPage.dob")}:</label>
+              <span>
+                {selectedUser.DOB
+                  ? new Date(selectedUser.DOB).toLocaleDateString()
+                  : t("usersPage.noData")}
+              </span>
+            </div>
+            <div className="detail-row">
+              <label>{t("usersPage.address")}:</label>
+              <span>{selectedUser.Address || t("usersPage.noData")}</span>
+            </div>
+            <div className="detail-row">
+              <label>{t("usersPage.communicationType")}:</label>
+              <span className="capitalize">
+                {selectedUser.communicationType || t("usersPage.noData")}
+              </span>
+            </div>
+            <div className="detail-row">
+              <label>{t("usersPage.referenceNumber")}:</label>
+              <span>{selectedUser.referenceNumber || t("usersPage.noData")}</span>
+            </div>
+            <div className="detail-row">
+              <label>{t("usersPage.referredBy")}:</label>
+              <span>{selectedUser.referredBy || t("usersPage.noData")}</span>
+            </div>
+            <div className="detail-row">
+              <label>{t("usersPage.referralLevel")}:</label>
+              <span>{selectedUser.referralLevel || 0}</span>
+            </div>
+            <div className="detail-row">
+              <label>{t("usersPage.totalReferrals")}:</label>
+              <span>{selectedUser.totalReferrals || 0}</span>
+            </div>
+            <div className="detail-row">
+              <label>{t("usersPage.joinedAt")}:</label>
+              <span>
+                {selectedUser.createdAt
+                  ? new Date(selectedUser.createdAt).toLocaleString()
+                  : t("usersPage.noData")}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )}
+</div>;
+
 
       <style jsx>{`
        .main-content{

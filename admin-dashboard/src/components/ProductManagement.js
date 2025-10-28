@@ -3,6 +3,7 @@ import Layout from './Layout';
 import { FaPlus, FaEdit, FaTrash, FaSearch } from 'react-icons/fa';
 import { productAPI } from '../services/api';
 import { toast } from 'react-toastify';
+import { useTranslation } from "react-i18next";
 
 const ProductManagement = () => {
   const [products, setProducts] = useState([]);
@@ -18,12 +19,14 @@ const ProductManagement = () => {
     description: '',
     descriptionArabic: '',
     price: '',
+    percentage: '',
     category: '',
     stock: '',
     image: ''
   });
   const [errors, setErrors] = useState({});
 
+    const { t, i18n } = useTranslation();
   useEffect(() => {
     fetchProducts();
   }, [currentPage, searchTerm]);
@@ -123,6 +126,10 @@ const ProductManagement = () => {
     if (!formData.price || parseFloat(formData.price) <= 0) {
       newErrors.price = 'Valid price is required';
     }
+
+    if (!formData.percentage || parseFloat(formData.percentage) <= 0) {
+      newErrors.percentage = 'Valid percentage is required';
+    }
     
     if (!formData.category.trim()) {
       newErrors.category = 'Category is required';
@@ -144,6 +151,7 @@ const ProductManagement = () => {
       description: product?.description || '',
       descriptionArabic: product?.descriptionArabic || '',
       price: product?.price?.toString() || '',
+      percentage: product?.percentage || 0,
       category: product?.category || '',
       stock: product?.stock?.toString() || '',
       image: product?.image || ''
@@ -161,6 +169,7 @@ const ProductManagement = () => {
       description: '',
       descriptionArabic: '',
       price: '',
+      percentage: 0,
       category: '',
       stock: '',
       image: ''
@@ -192,7 +201,7 @@ const ProductManagement = () => {
               <FaSearch className="search-icon" />
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder={t("productsPage.searchPlaceholder")}
                 value={searchTerm}
                 onChange={handleSearch}
                 className="form-control"
@@ -201,13 +210,13 @@ const ProductManagement = () => {
           </div>
           <div className="page-actions">
             <button className="btn btn-primary" onClick={() => openModal()}>
-              <FaPlus /> Add New Product
+              <FaPlus /> {t("productsPage.addNew")}
             </button>
           </div>
         </div>
 
         {loading ? (
-          <div className="loading">Loading products...</div>
+          <div className="loading">{t("productsPage.loading")}</div>
         ) : (
           <>
             <div className="modern-table-container">
@@ -215,31 +224,11 @@ const ProductManagement = () => {
                 <table className="modern-table">
                   <thead>
                     <tr>
-                      <th>
-                        <div className="th-content">
-                          <span>Product Info</span>
-                        </div>
-                      </th>
-                      <th>
-                        <div className="th-content">
-                          <span>Category</span>
-                        </div>
-                      </th>
-                      <th>
-                        <div className="th-content">
-                          <span>Pricing</span>
-                        </div>
-                      </th>
-                      <th>
-                        <div className="th-content">
-                          <span>Stock</span>
-                        </div>
-                      </th>
-                      <th>
-                        <div className="th-content">
-                          <span>Actions</span>
-                        </div>
-                      </th>
+                       <th><span>{t("productsPage.productInfo")}</span></th>
+                      <th><span>{t("productsPage.category")}</span></th>
+                      <th><span>{t("productsPage.pricing")}</span></th>
+                      <th><span>{t("productsPage.stock")}</span></th>
+                      <th><span>{t("productsPage.actions")}</span></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -268,6 +257,11 @@ const ProductManagement = () => {
                             <span className="price-value">${product.price?.toFixed(2)}</span>
                           </div>
                         </td>
+                        <td className="price-cell">
+                          <div className="price-info">
+                            <span className="price-value">${product.percentage?.toFixed(2)}</span>
+                          </div>
+                        </td>
                         <td className="stock-cell">
                           <div className="stock-info">
                             <span className={`stock-badge ${product.stock > 10 ? 'in-stock' : product.stock > 0 ? 'low-stock' : 'out-of-stock'}`}>
@@ -280,14 +274,14 @@ const ProductManagement = () => {
                             <button
                               className="action-btn edit-btn"
                               onClick={() => openModal(product)}
-                              title="Edit Product"
+                              title={t("productsPage.edit")}
                             >
                               <FaEdit />
                             </button>
                             <button
                               className="action-btn delete-btn"
                               onClick={() => handleDelete(product._id || product.id)}
-                              title="Delete Product"
+                              title={t("productsPage.delete")}
                             >
                               <FaTrash />
                             </button>
@@ -300,7 +294,7 @@ const ProductManagement = () => {
                 
                 {products.length === 0 && !loading && (
                   <div className="empty-state">
-                    <p>No products found</p>
+                    <p>{t("productsPage.noProducts")}</p>
                     <p>Debug: Products array length: {products.length}</p>
                   </div>
                 )}
@@ -315,17 +309,17 @@ const ProductManagement = () => {
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
                 >
-                  Previous
+                  {t("productsPage.pagination.previous")}
                 </button>
                 <span className="page-info">
-                  Page {currentPage} of {totalPages}
+                  {t("productsPage.pagination.pageInfo", { current: currentPage, total: totalPages })}
                 </span>
                 <button
                   className="btn btn-secondary"
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
                 >
-                  Next
+                  {t("productsPage.pagination.next")}
                 </button>
               </div>
             )}
@@ -337,34 +331,34 @@ const ProductManagement = () => {
           <div className="modal-overlay" onClick={closeModal}>
             <div className="modal large-modal" onClick={(e) => e.stopPropagation()}>
               <div className="modal-header">
-                <h2>{editingProduct ? 'Edit Product' : 'Add New Product'}</h2>
+                <h2>{editingProduct ? t("productsPage.edit") : t("productsPage.addNew")}</h2>
                 <button className="modal-close" onClick={closeModal}>×</button>
               </div>
               
               <form onSubmit={handleSubmit} className="modal-body">
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label">Product Name</label>
+                    <label className="form-label">{t("productsPage.form.name")}</label>
                     <input
                       type="text"
                       name="name"
                       value={formData.name}
                       onChange={handleChange}
                       className={`form-control ${errors.name ? 'error' : ''}`}
-                      placeholder="Enter product name"
+                      placeholder={t("productsPage.form.name")}
                     />
                     {errors.name && <span className="error-text">{errors.name}</span>}
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Arabic Name</label>
+                    <label className="form-label">{t("productsPage.form.nameArabic")}</label>
                     <input
                       type="text"
                       name="nameArabic"
                       value={formData.nameArabic}
                       onChange={handleChange}
                       className={`form-control ${errors.nameArabic ? 'error' : ''}`}
-                      placeholder="Enter Arabic name"
+                      placeholder={t("productsPage.form.nameArabic")}
                     />
                     {errors.nameArabic && <span className="error-text">{errors.nameArabic}</span>}
                   </div>
@@ -372,20 +366,20 @@ const ProductManagement = () => {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label">Category</label>
+                    <label className="form-label">{t("productsPage.form.category")}</label>
                     <input
                       type="text"
                       name="category"
                       value={formData.category}
                       onChange={handleChange}
                       className={`form-control ${errors.category ? 'error' : ''}`}
-                      placeholder="Enter category"
+                      placeholder={t("productsPage.form.category")}
                     />
                     {errors.category && <span className="error-text">{errors.category}</span>}
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Price</label>
+                    <label className="form-label">{t("productsPage.form.price")}</label>
                     <input
                       type="number"
                       step="0.01"
@@ -393,67 +387,81 @@ const ProductManagement = () => {
                       value={formData.price}
                       onChange={handleChange}
                       className={`form-control ${errors.price ? 'error' : ''}`}
-                      placeholder="Enter price"
+                      placeholder={t("productsPage.form.price")}
                     />
                     {errors.price && <span className="error-text">{errors.price}</span>}
                   </div>
 
                   <div className="form-group">
-                    <label className="form-label">Stock</label>
+                    <label className="form-label">{t("productsPage.form.percentage")}</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      name="percentage"
+                      value={formData.percentage}
+                      onChange={handleChange}
+                      className={`form-control ${errors.percentage ? 'error' : ''}`}
+                      placeholder={t("productsPage.form.percentage")}
+                    />
+                    {errors.price && <span className="error-text">{errors.price}</span>}
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">{t("productsPage.form.stock")}</label>
                     <input
                       type="number"
                       name="stock"
                       value={formData.stock}
                       onChange={handleChange}
                       className={`form-control ${errors.stock ? 'error' : ''}`}
-                      placeholder="Enter stock quantity"
+                      placeholder={t("productsPage.form.stock")}
                     />
                     {errors.stock && <span className="error-text">{errors.stock}</span>}
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Description</label>
+                  <label className="form-label">{t("productsPage.form.description")}</label>
                   <textarea
                     name="description"
                     value={formData.description}
                     onChange={handleChange}
                     className="form-control"
                     rows="3"
-                    placeholder="Enter product description"
+                    placeholder={t("productsPage.form.description")}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Arabic Description</label>
+                  <label className="form-label">{t("productsPage.form.descriptionArabic")}</label>
                   <textarea
                     name="descriptionArabic"
                     value={formData.descriptionArabic}
                     onChange={handleChange}
                     className="form-control"
                     rows="3"
-                    placeholder="Enter Arabic description"
+                    placeholder={t("productsPage.form.descriptionArabic")}
                   />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">Image URL</label>
+                  <label className="form-label">{t("productsPage.form.image")}</label>
                   <input
                     type="url"
                     name="image"
                     value={formData.image}
                     onChange={handleChange}
                     className="form-control"
-                    placeholder="Enter image URL"
+                    placeholder={t("productsPage.form.image")}
                   />
                 </div>
 
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                    Cancel
+                     {t("productsPage.form.cancel")}
                   </button>
                   <button type="submit" className="btn btn-primary">
-                    {editingProduct ? 'Update' : 'Create'} Product
+                   {editingProduct ? t("productsPage.form.update") : t("productsPage.form.create")}
                   </button>
                 </div>
               </form>

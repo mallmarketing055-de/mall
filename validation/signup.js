@@ -422,6 +422,17 @@ module.exports.validateProduct=()=>{
                 return true;
             }),
 
+        check('percentage')
+            .notEmpty()
+            .withMessage('percentage cannot be empty')
+            .isNumeric()
+            .withMessage('percentage must be a number')
+            .custom((value) => {
+                if (value < 0) {
+                    throw new Error('percentage cannot be negative');
+                }
+                return true;
+            }),
         check('category')
             .notEmpty()
             .withMessage('Category cannot be empty')
