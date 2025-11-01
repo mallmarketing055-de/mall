@@ -41,5 +41,8 @@
       "last 1 safari version"
     ]
   },
-  "proxy": "https://mall-d62z.onrender.com"
+  "proxy": "https://mall-d62z.onrender.com",
+  "devDependencies": {
+    "typescript": "^5.4.5"
+  }
 }
