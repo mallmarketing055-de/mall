@@ -20,8 +20,9 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
+    "install:render": "npm install --legacy-peer-deps",
+    "render-build": "npm run install:render && npm run build",
     "test": "react-scripts test",
-    "render-build": "npm install --legacy-peer-deps && npm run build",
     "eject": "react-scripts eject"
   },
   "eslintConfig": {
