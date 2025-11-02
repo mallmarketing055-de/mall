@@ -76,7 +76,10 @@ module.exports.getReferralNetwork = async (req, res) => {
     }
 
     // Recursive function to build the referral tree
-    const buildReferralTree = async (parentId) => {
+    const buildReferralTree = async (parentId, visited = new Set()) => {
+      if (visited.has(parentId.toString())) return [];
+      visited.add(parentId.toString());
+
       const children = await CustomerModel.find({ parentCustomer: parentId })
         .select('_id name username referenceNumber referralLevel totalReferrals directReferrals createdAt profilePicture')
         .sort({ createdAt: -1 });
@@ -93,11 +96,11 @@ module.exports.getReferralNetwork = async (req, res) => {
           totalReferrals: child.totalReferrals,
           directReferrals: child.directReferrals,
           joinedDate: child.createdAt,
-          profilePicture: {
+          profilePicture: child.profilePicture ? {
             filename: child.profilePicture.filename,
             url: `/api/uploads/profile-pictures/${child.profilePicture.filename}`
-          },
-          children: await buildReferralTree(child._id) // Recursive call for children
+          } : null,
+          children: await buildReferralTree(child._id, visited) // Recursive call for children
         };
 
         childrenWithSubtree.push(childData);

@@ -1,7 +1,22 @@
 const bcrypt = require('bcrypt');
 const JWT = require('jsonwebtoken');
 const AdminModel = require('../model/Admin');
-const CustomerModel=require("../model/Customers")
+const CustomerModel=require("../model/Customers");
+
+
+// ✅ Check if referral code exists
+module.exports.doesReferralCodeExist = async (referralCode) => {
+  try {
+    console.log('Checking referral code:', referralCode.toString());
+    const existingCustomer = await CustomerModel.findOne({ referenceNumber: referralCode.toString() });
+    const existingCustomers = await CustomerModel.find({ });
+    console.log('Referral code existence result:', existingCustomers);
+    return !!existingCustomer; // true لو موجود, false لو مش موجود
+  } catch (error) {
+    console.error('Error checking referral code existence:', error);
+    throw error;
+  }
+}
 
 module.exports.createUser = async (CustomerInfo) => {
   try {
@@ -17,6 +32,7 @@ module.exports.createUser = async (CustomerInfo) => {
       DOB: CustomerInfo.DOB,
       Gender: CustomerInfo.Gender,
       communicationType: CustomerInfo.communicationType,
+      referredBy: CustomerInfo.referredBy,
       profilePicture: CustomerInfo.profilePicture || {
         filename: 'default-avatar.png',
         originalName: null,

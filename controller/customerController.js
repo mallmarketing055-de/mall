@@ -83,10 +83,11 @@ module.exports.signup = async (req, res) => {
       Gender,
       communicationType,
       profilePicture: profilePictureData,
-      referredBy: referredBy || null,
+      referredBy: referredBy.toString() || null,
       points: 0 // ✅ Add this line for initial points
     };
 
+    console.log('Creating user with info:', customerInfo);
     const newUser = await authService.createUser(customerInfo);
 
     // Generate JWT token
