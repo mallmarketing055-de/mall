@@ -10,7 +10,8 @@ import {
   FaSignOutAlt,
   FaBars,
   FaTimes,
-  FaUser
+  FaUser,
+  FaGlobe
 } from 'react-icons/fa';
 import './Layout.css';
 import { useTranslation } from 'react-i18next';
@@ -21,6 +22,14 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
+
+
+
+  const toggleLanguage = () => {
+    const newLang = i18n.language === "ar" ? "en" : "ar";
+    i18n.changeLanguage(newLang);
+    document.dir = i18n.language === 'ar' ? 'rtl' : 'ltr';
+  };
 
   const menuItems = [
     {
@@ -68,11 +77,6 @@ const Layout = ({ children }) => {
     setSidebarOpen(false);
   };
 
-  const changeLanguage = (lang) => {
-    i18n.changeLanguage(lang);
-    document.dir = lang === 'ar' ? 'rtl' : 'ltr';
-  };
-
   return (
     <div className="layout">
       {/* Sidebar */}
@@ -84,8 +88,23 @@ const Layout = ({ children }) => {
           </div>
 
           <div className="App">
-            <button onClick={() => changeLanguage("en")}>{t("english")}</button>
-            <button onClick={() => changeLanguage("ar")}>{t("arabic")}</button>
+            <button
+              onClick={toggleLanguage}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "8px",
+                backgroundColor: "#007bff",
+                color: "white",
+                border: "none",
+                padding: "8px 12px",
+                borderRadius: "6px",
+                cursor: "pointer",
+              }}
+            >
+              <FaGlobe />
+              {i18n.language === "ar" ? t("english") : t("arabic")}
+            </button>
           </div>
 
           <button className="sidebar-close" onClick={closeSidebar}>
