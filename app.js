@@ -17,6 +17,7 @@ const productRoutes = require('./routes/productRoutes');
 const transactionRoutes = require('./routes/transactionRoutes');
 const qrCodeRoutes = require('./routes/qrCodeRoutes');
 const walletRoutes = require('./routes/getBalanceRouter');
+const filesRoutes = require('./routes/file.Routes');
 
 dotenv.config({
     path: './config/.env',
@@ -66,6 +67,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/transactions', transactionRoutes);
 app.use('/api/qrcode', qrCodeRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use('/api/files', filesRoutes);
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

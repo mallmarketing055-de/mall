@@ -304,6 +304,7 @@ module.exports.clearCart = async (req, res) => {
 module.exports.checkout = async (req, res) => {
   try {
     const customerId = req.user.Customer_id;
+    const deliveryAddress = req.body.deliveryAddress || null;
 
     // Find cart for customer
     const cart = await CartModel.findOne({ customerId });
@@ -315,6 +316,12 @@ module.exports.checkout = async (req, res) => {
       });
     }
 
+    // ✅ Optionally update customer’s saved address
+    await CustomerModel.findByIdAndUpdate(
+      customerId,
+      { $set: { deliveryAddress } },
+      { new: true }
+    );
     // Calculate reward points: 10 points per 1000 L.S
     const totalAmount = cart.totalAmount || 0;
     const earnedPoints = Math.floor(totalAmount / 1000) * 10;
