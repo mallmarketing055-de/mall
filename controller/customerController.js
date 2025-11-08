@@ -323,7 +323,7 @@ module.exports.updateProfile = async (req, res) => {
     }
 
     // Extract fields that can be updated
-    const { name, username, email, phone, Address, DOB, Gender, communicationType } = req.body;
+    const { name, username, email, phone, Address, DOB, Gender, communicationType, profilePictureURL, FrontIDImageURL, BackIDImageURL } = req.body;
 
     // Check if username is being changed and if it already exists
     if (username && username !== customer.username) {
@@ -365,6 +365,10 @@ module.exports.updateProfile = async (req, res) => {
     if (DOB !== undefined) updateData.DOB = DOB;
     if (Gender !== undefined) updateData.Gender = Gender;
     if (communicationType !== undefined) updateData.communicationType = communicationType;
+    // profilePictureURL, FrontIDImageURL, BackIDImageURL
+    if (profilePictureURL !== undefined) updateData.profilePictureURL = profilePictureURL;
+    if (FrontIDImageURL !== undefined) updateData.FrontIDImageURL = FrontIDImageURL;
+    if (BackIDImageURL !== undefined) updateData.BackIDImageURL = BackIDImageURL;
 
     // Update the customer
     const updatedCustomer = await CustomerModel.findByIdAndUpdate(

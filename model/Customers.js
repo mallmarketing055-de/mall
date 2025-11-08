@@ -70,6 +70,18 @@ const customerSchema = new mongoose.Schema({
       default: null
     }
   },
+  profilePictureURL: {
+    type: String,
+    default: null
+  },
+  FrontIDImageURL: {
+    type: String,
+    default: null
+  },
+  BackIDImageURL: {
+    type: String,
+    default: null
+  },
   isVerified: {
     type: Boolean,
     default: false
