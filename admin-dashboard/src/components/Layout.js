@@ -5,6 +5,7 @@ import {
   FaTachometerAlt, 
   FaUsers, 
   FaBox, 
+  FaShareAlt,
   FaReceipt, 
   FaUserShield,
   FaSignOutAlt,
@@ -49,6 +50,12 @@ const Layout = ({ children }) => {
       icon: FaBox,
       label: t('product_management'),
       color: '#ffc107'
+    },
+    {
+      path: '/social-media-links',
+      icon: FaShareAlt,
+      label: t('socialMediaLinksPage.pageTitle'),
+      color: '#ff6b6b'
     },
     {
       path: '/users',

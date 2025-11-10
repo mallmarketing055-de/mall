@@ -173,5 +173,37 @@
     "totalReferrals": "إجمالي الإحالات",
     "joinedAt": "تاريخ الانضمام",
     "noData": "غير متوفر"
+  },
+  "socialMediaLinksPage": {
+    "pageTitle": "روابط وسائل التواصل الاجتماعي",
+    "addSocialLink": "إضافة رابط جديد",
+    "loadingLinks": "جارٍ تحميل الروابط...",
+    "platform": "المنصة",
+    "url": "الرابط",
+    "icon": "أيقونة (اختياري)",
+    "actions": "الإجراءات",
+    "editLink": "تعديل الرابط",
+    "addLink": "إضافة رابط",
+    "cancel": "إلغاء",
+    "create": "إنشاء",
+    "update": "تحديث",
+    "selectPlatform": "اختر منصة",
+    "facebook": "فيسبوك",
+    "twitter": "تويتر",
+    "instagram": "إنستجرام",
+    "linkedin": "لينكدإن",
+    "youtube": "يوتيوب",
+    "tiktok": "تيك توك",
+    "other": "أخرى",
+    "platformRequired": "المنصة مطلوبة",
+    "urlRequired": "الرابط مطلوب",
+    "urlInvalid": "يجب أن يبدأ الرابط بـ http أو https",
+    "fetchFailed": "فشل في جلب روابط وسائل التواصل",
+    "saveFailed": "فشل في حفظ الرابط",
+    "deleteFailed": "فشل في حذف الرابط",
+    "deleteConfirm": "هل أنت متأكد أنك تريد حذف هذا الرابط؟",
+    "noLinksFound": "لا توجد روابط متاحة",
+    "choosePlatformNotice": "يرجى اختيار واحدة من المنصات المتاحة"
   }
+
 }

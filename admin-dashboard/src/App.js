@@ -11,6 +11,7 @@ import ProductManagement from './components/ProductManagement';
 import UserManagement from './components/UserManagement';
 import TransactionManagement from './components/TransactionManagement';
 import "./i18n"; // <-- make sure this is here
+import SocialMediaLinks from './components/SocialMediaManagement';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -77,6 +78,15 @@ function App() {
               element={
                 <ProtectedRoute>
                   <ProductManagement />
+                </ProtectedRoute>
+              } 
+            />
+
+            <Route 
+              path="/social-media-links" 
+              element={
+                <ProtectedRoute>
+                  <SocialMediaLinks />
                 </ProtectedRoute>
               } 
             />

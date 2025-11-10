@@ -107,4 +107,22 @@ export const transactionAPI = {
   getTransactionStats: () => api.get('/api/transactions/stats'),
 };
 
+export const socialMediaAPI = {
+  // ✅ Create new social media link
+  createLink: (linkData) => api.post('/api/social-links', linkData),
+
+  // ✅ Get all links (for logged-in user or all, depending on backend)
+  getAllLinks: (params) => api.get('/api/social-links', { params }),
+
+  // ✅ Get specific link by ID
+  getLinkById: (id) => api.get(`/api/social-links/${id}`),
+
+  // ✅ Update a link
+  updateLink: (id, linkData) => api.put(`/api/social-links/${id}`, linkData),
+
+  // ✅ Delete a link
+  deleteLink: (id) => api.delete(`/api/social-links/${id}`),
+};
+
+
 export default api;

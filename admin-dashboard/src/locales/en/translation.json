@@ -173,6 +173,37 @@
     "totalReferrals": "Total Referrals",
     "joinedAt": "Joined Date",
     "noData": "N/A"
-  }
+  },
+  "socialMediaLinksPage": {
+  "pageTitle": "Social Media Links",
+  "addSocialLink": "Add Social Link",
+  "loadingLinks": "Loading links...",
+  "platform": "Platform",
+  "url": "URL",
+  "icon": "Icon (optional)",
+  "actions": "Actions",
+  "editLink": "Edit Link",
+  "addLink": "Add Link",
+  "cancel": "Cancel",
+  "create": "Create",
+  "update": "Update",
+  "selectPlatform": "Select a platform",
+  "facebook": "Facebook",
+  "twitter": "Twitter",
+  "instagram": "Instagram",
+  "linkedin": "LinkedIn",
+  "youtube": "YouTube",
+  "tiktok": "TikTok",
+  "other": "Other",
+  "platformRequired": "Platform is required",
+  "urlRequired": "URL is required",
+  "urlInvalid": "URL must start with http or https",
+  "fetchFailed": "Failed to fetch social media links",
+  "saveFailed": "Failed to save link",
+  "deleteFailed": "Failed to delete link",
+  "deleteConfirm": "Are you sure you want to delete this link?",
+  "noLinksFound": "No social links found",
+  "choosePlatformNotice": "Please choose one of the available platforms"
+}
 
 }
