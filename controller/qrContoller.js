@@ -1,25 +1,27 @@
 const QRCode = require('qrcode');
 const Transaction = require('../model/Transaction');
 const User = require('../model/Customers'); // Assuming this is your user model
+const Customers = require('../model/Customers');
 
 // ===========================
 // Generate QR Code & Save Transaction
 // ===========================
 exports.generateQRCode = async (req, res) => {
   try {
-    const { amount, username, userEmail, customerId } = req.body;
+    const { amount, username } = req.body;
 
+    console.log(req.user.Customer_id)
     // ✅ Validate input
-    if (!amount || !username || !userEmail || !customerId) {
+    if (!amount || !username) {
       return res.status(400).json({
         success: false,
-        message: 'Amount, username, email, and customerId are required'
+        message: 'Amount and username are required'
       });
     }
 
     // ✅ Check if there's already a pending transaction for this user and amount
     const existingTransaction = await Transaction.findOne({
-      customerId,
+      customerId: req.user.Customer_id,
       amount,
       status: 'pending'
     });
@@ -39,11 +41,20 @@ exports.generateQRCode = async (req, res) => {
       });
     }
 
+    const user = await Customers.findOne({username: username});
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'user not found'
+      });
+    }
+
     // ✅ Create a new transaction
     const newTransaction = new Transaction({
-      customerId,
+      customerId: req.user.Customer_id,
       userName: username,
-      userEmail,
+      userEmail: user.email,
       amount,
       type: 'payment',
       status: 'pending',

@@ -303,6 +303,7 @@ module.exports.clearCart = async (req, res) => {
 
 module.exports.checkout = async (req, res) => {
   try {
+    console.log('Checkout request body:', req.user);
     const customerId = req.user.Customer_id;
     const deliveryAddress = req.body.deliveryAddress || null;
 
@@ -326,6 +327,7 @@ module.exports.checkout = async (req, res) => {
     const totalAmount = cart.totalAmount || 0;
     const earnedPoints = Math.floor(totalAmount / 1000) * 10;
 
+    console.log(`Customer ${customerId} earned ${earnedPoints} points for spending ${totalAmount} L.S`);
     // Update customer points
     const customer = await CustomerModel.findById(customerId);
     if (!customer) {

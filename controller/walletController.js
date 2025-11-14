@@ -3,6 +3,7 @@ const Customer = require('../model/Customers');
 // ✅ Get wallet balance for the logged-in user
 exports.getWalletBalance = async (req, res) => {
   try {
+    console.log('Checkout request body:', req.user);
     const customerId = req.user.Customer_id;
 
     if (!customerId) {
