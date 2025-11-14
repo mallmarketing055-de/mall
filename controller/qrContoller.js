@@ -10,7 +10,7 @@ exports.generateQRCode = async (req, res) => {
   try {
     const { amount, username } = req.body;
 
-    console.log(req.user.Customer_id)
+    console.log(req.user)
     // ✅ Validate input
     if (!amount || !username) {
       return res.status(400).json({
@@ -41,7 +41,7 @@ exports.generateQRCode = async (req, res) => {
       });
     }
 
-    const user = await Customers.findOne({username: username});
+    const user = await Customers.findOne({_id: req.user.Customer_id});
 
     if (!user) {
       return res.status(400).json({
@@ -53,12 +53,12 @@ exports.generateQRCode = async (req, res) => {
     // ✅ Create a new transaction
     const newTransaction = new Transaction({
       customerId: req.user.Customer_id,
-      userName: username,
+      userName: req.user.username,
       userEmail: user.email,
       amount,
       type: 'payment',
       status: 'pending',
-      description: `QR Payment from ${username}`,
+      description: `QR Payment from ${req.user.username}`,
       paymentMethod: 'wallet'
     });
 
@@ -68,7 +68,7 @@ exports.generateQRCode = async (req, res) => {
     const qrData = {
       transactionId: newTransaction._id.toString(),
       amount: newTransaction.amount,
-      senderUsername: username
+      senderUsername: req.user.username
     };
 
     // ✅ Generate QR code image
@@ -125,6 +125,8 @@ exports.confirmPayment = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Sender or receiver not found' });
     }
 
+    console.log(`Sender: ${sender.username}, Balance: ${sender.points}`);
+    console.log(`Receiver: ${receiver.username}, Balance: ${receiver.points}`);
     // ✅ Check sender balance
     if (sender.points < amount) {
       return res.status(400).json({ success: false, message: 'Insufficient points' });
@@ -199,6 +201,9 @@ exports.confirmPayment = async (req, res) => {
     if (!sender || !receiver) {
       return res.status(404).json({ success: false, message: 'Sender or receiver not found' });
     }
+
+    console.log(`Sender: ${sender.username}, Balance: ${sender.points}`);
+    console.log(`Receiver: ${receiver.username}, Balance: ${receiver.points}`);
 
     // ✅ Check sender balance
     if (sender.points < amount) {
