@@ -1,6 +1,8 @@
 const { validationResult } = require('express-validator');
 const CartModel = require('../model/Cart');
 const CustomerModel = require('../model/Customers');
+const ProductModel = require('../model/Product');
+
 
 // Add Item to Cart
 module.exports.addToCart = async (req, res) => {
@@ -301,15 +303,82 @@ module.exports.clearCart = async (req, res) => {
   }
 };
 
+// module.exports.checkout = async (req, res) => {
+//   try {
+//     console.log('Checkout request body:', req.user);
+//     const customerId = req.user.Customer_id;
+//     const deliveryAddress = req.body.deliveryAddress || null;
+
+//     // Find cart for customer
+//     const cart = await CartModel.findOne({ customerId });
+
+//     if (!cart || cart.items.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Cart is empty or not found'
+//       });
+//     }
+
+//     // ✅ Optionally update customer’s saved address
+//     await CustomerModel.findByIdAndUpdate(
+//       customerId,
+//       { $set: { deliveryAddress } },
+//       { new: true }
+//     );
+//     // Calculate reward points: 10 points per 1000 L.S
+//     const totalAmount = cart.totalAmount || 0;
+//     const earnedPoints = Math.floor(totalAmount / 1000) * 10;
+
+//     console.log(`Customer ${customerId} earned ${earnedPoints} points for spending ${totalAmount} L.S`);
+//     // Update customer points
+//     const customer = await CustomerModel.findById(customerId);
+//     if (!customer) {
+//       return res.status(404).json({
+//         success: false,
+//         message: 'Customer not found'
+//       });
+//     }
+
+//     customer.points += earnedPoints;
+//     await customer.save();
+
+//     // Optionally: clear cart after checkout
+//     await cart.clearCart();
+
+//     res.status(200).json({
+//       success: true,
+//       message: 'Checkout successful',
+//       data: {
+//         totalAmount,
+//         earnedPoints,
+//         totalPoints: customer.points,
+//         cart: {
+//           cartId: cart._id,
+//           totalItems: 0,
+//           totalAmount: 0,
+//           items: []
+//         }
+//       }
+//     });
+
+//   } catch (error) {
+//     console.error('Checkout error:', error);
+//     res.status(500).json({
+//       success: false,
+//       message: 'Internal server error',
+//       error: error.message
+//     });
+//   }
+// };
+
+
 module.exports.checkout = async (req, res) => {
   try {
-    console.log('Checkout request body:', req.user);
     const customerId = req.user.Customer_id;
     const deliveryAddress = req.body.deliveryAddress || null;
 
-    // Find cart for customer
+    // Find cart
     const cart = await CartModel.findOne({ customerId });
-
     if (!cart || cart.items.length === 0) {
       return res.status(400).json({
         success: false,
@@ -317,46 +386,76 @@ module.exports.checkout = async (req, res) => {
       });
     }
 
-    // ✅ Optionally update customer’s saved address
-    await CustomerModel.findByIdAndUpdate(
-      customerId,
-      { $set: { deliveryAddress } },
-      { new: true }
-    );
-    // Calculate reward points: 10 points per 1000 L.S
-    const totalAmount = cart.totalAmount || 0;
-    const earnedPoints = Math.floor(totalAmount / 1000) * 10;
+    // Update customer delivery address
+    await CustomerModel.findByIdAndUpdate(customerId, {
+      $set: { Address: deliveryAddress }
+    });
 
-    console.log(`Customer ${customerId} earned ${earnedPoints} points for spending ${totalAmount} L.S`);
-    // Update customer points
-    const customer = await CustomerModel.findById(customerId);
-    if (!customer) {
-      return res.status(404).json({
-        success: false,
-        message: 'Customer not found'
-      });
+    // -------------------------
+    // 1) CALCULATE PRODUCT POINTS
+    // -------------------------
+    const productIds = cart.items.map(i => i.productId);
+    console.log(cart.items);
+    console.log("Product IDs in cart:", productIds);
+    const products = await ProductModel.find({ _id: { $in: productIds } });
+
+    let totalPoints = 0;
+
+    for (const item of cart.items) {
+      const product = products.find(p => p._id.toString() === item.productId);
+      if (product) {
+        const productPoints = (product.percentage || 0) * item.quantity;
+        totalPoints += productPoints;
+      }
     }
 
-    customer.points += earnedPoints;
-    await customer.save();
+    console.log("Total product points:", totalPoints);
 
-    // Optionally: clear cart after checkout
+    // Split points
+    const appPoints = totalPoints * 0.5;
+    let treePoints = totalPoints * 0.5;
+
+    // -------------------------
+    // 2) REWARD CHECKOUT CUSTOMER
+    // -------------------------
+    const checkoutCustomer = await CustomerModel.findById(customerId);
+    const checkoutReward = treePoints * 0.10; // 10%
+    checkoutCustomer.points += checkoutReward;
+    await checkoutCustomer.save();
+
+    treePoints -= checkoutReward;
+
+    // -------------------------
+    // 3) DISTRIBUTE POINTS THROUGH TREE
+    // -------------------------
+    let currentParentId = checkoutCustomer.parentCustomer;
+
+    while (currentParentId && treePoints > 0) {
+      const parent = await CustomerModel.findById(currentParentId);
+      if (!parent) break;
+
+      const reward = treePoints * 0.10; // Each parent takes 10% of remaining points
+      parent.points += reward;
+      await parent.save();
+
+      treePoints -= reward;
+
+      // Move to next ancestor
+      currentParentId = parent.parentCustomer;
+    }
+
+    // -------------------------
+    // 4) Clear cart after checkout
+    // -------------------------
     await cart.clearCart();
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       message: 'Checkout successful',
-      data: {
-        totalAmount,
-        earnedPoints,
-        totalPoints: customer.points,
-        cart: {
-          cartId: cart._id,
-          totalItems: 0,
-          totalAmount: 0,
-          items: []
-        }
-      }
+      totalDistributedPoints: totalPoints,
+      appPoints,
+      customerPointsAdded: checkoutReward,
+      remainingTreePointsUndistributed: treePoints,
     });
 
   } catch (error) {
