@@ -6,6 +6,8 @@ const authMiddleware = require('../middelwares/authorization');
 
 // All transaction routes require admin authentication
 router.use(authMiddleware.auth);
+// Get User Transactions
+router.get('/me', transactionController.getUserTransactionsMobile);
 router.use(authMiddleware.isAdmin);
 
 // Get All Transactions

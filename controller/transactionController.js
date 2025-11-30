@@ -339,3 +339,49 @@ module.exports.getTransactionStats = async (req, res) => {
     });
   }
 };
+
+
+// Get User Transactions
+module.exports.getUserTransactionsMobile = async (req, res) => {
+  try {
+    console.log('User ID from token:', req.user);
+    const userId = req.user.Customer_id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+    const status = req.query.status || '';
+    const type = req.query.type || '';
+
+    const query = { customerId: userId };
+    if (status) query.status = status;
+    if (type) query.type = type;
+
+    const transactions = await TransactionModel.find(query)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const totalTransactions = await TransactionModel.countDocuments(query);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        transactions,
+        pagination: {
+          currentPage: page,
+          totalPages: Math.ceil(totalTransactions / limit),
+          totalItems: totalTransactions,
+          itemsPerPage: limit
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get user transactions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
