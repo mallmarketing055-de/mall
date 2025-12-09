@@ -83,7 +83,7 @@ module.exports.signup = async (req, res) => {
       Gender,
       communicationType,
       profilePicture: profilePictureData,
-      referredBy: referredBy.toString() || null,
+      referredBy: referredBy ? referredBy.toString() :  null,
       points: 0 // ✅ Add this line for initial points
     };
 
