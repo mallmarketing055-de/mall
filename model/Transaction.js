@@ -36,7 +36,7 @@ const transactionSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ['purchase', 'refund', 'payment', 'withdrawal', 'deposit'],
+    enum: ['purchase', 'refund', 'payment', 'withdrawal', 'deposit', 'credit'],
     default: 'purchase'
   },
   description: {
@@ -46,7 +46,7 @@ const transactionSchema = new mongoose.Schema({
   },
   paymentMethod: {
     type: String,
-    enum: ['credit_card', 'debit_card', 'paypal', 'bank_transfer', 'cash', 'wallet'],
+    enum: ['credit_card', 'debit_card', 'paypal', 'bank_transfer', 'cash', 'wallet', "admin"],
     default: 'credit_card'
   },
   reference: {
@@ -132,7 +132,42 @@ const transactionSchema = new mongoose.Schema({
   },
   refundedAt: {
     type: Date
-  }
+  },
+  // 🟢 Points Distribution Tracking (for checkout purchases)
+  cartTotal: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  rewardPointsEarned: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  appPointsShare: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  giftsPointsShare: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  treePointsShare: {
+    type: Number,
+    min: 0,
+    default: 0
+  },
+  treeDistribution: [{
+    recipientId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Customer'
+    },
+    recipientUsername: String,
+    amount: Number,
+    level: Number
+  }]
 }, {
   timestamps: true
 });
@@ -147,30 +182,30 @@ transactionSchema.index({ externalTransactionId: 1 });
 transactionSchema.index({ userEmail: 1 });
 
 // Virtual for total fees
-transactionSchema.virtual('totalFees').get(function() {
-  return (this.fees.processingFee || 0) + 
-         (this.fees.serviceFee || 0) + 
-         (this.fees.tax || 0) + 
-         (this.fees.shipping || 0);
+transactionSchema.virtual('totalFees').get(function () {
+  return (this.fees.processingFee || 0) +
+    (this.fees.serviceFee || 0) +
+    (this.fees.tax || 0) +
+    (this.fees.shipping || 0);
 });
 
 // Virtual for total discount
-transactionSchema.virtual('totalDiscount').get(function() {
+transactionSchema.virtual('totalDiscount').get(function () {
   return this.discounts.discountAmount || 0;
 });
 
 // Virtual for net amount (amount + fees - discounts)
-transactionSchema.virtual('netAmount').get(function() {
+transactionSchema.virtual('netAmount').get(function () {
   return this.amount + this.totalFees - this.totalDiscount;
 });
 
 // Virtual for checking if transaction is refundable
-transactionSchema.virtual('isRefundable').get(function() {
+transactionSchema.virtual('isRefundable').get(function () {
   return this.status === 'completed' && this.refundAmount < this.amount;
 });
 
 // Pre-save middleware to generate reference number
-transactionSchema.pre('save', function(next) {
+transactionSchema.pre('save', function (next) {
   if (!this.reference && this.isNew) {
     // Generate reference number: TXN + timestamp + random 4 digits
     const timestamp = Date.now().toString().slice(-8);
@@ -181,7 +216,7 @@ transactionSchema.pre('save', function(next) {
 });
 
 // Pre-save middleware to set processedAt when status changes to completed
-transactionSchema.pre('save', function(next) {
+transactionSchema.pre('save', function (next) {
   if (this.isModified('status') && this.status === 'completed' && !this.processedAt) {
     this.processedAt = new Date();
   }
@@ -189,42 +224,42 @@ transactionSchema.pre('save', function(next) {
 });
 
 // Method to mark transaction as completed
-transactionSchema.methods.markCompleted = function() {
+transactionSchema.methods.markCompleted = function () {
   this.status = 'completed';
   this.processedAt = new Date();
   return this.save();
 };
 
 // Method to mark transaction as failed
-transactionSchema.methods.markFailed = function(reason) {
+transactionSchema.methods.markFailed = function (reason) {
   this.status = 'failed';
   this.failureReason = reason;
   return this.save();
 };
 
 // Method to process refund
-transactionSchema.methods.processRefund = function(refundAmount, reason) {
+transactionSchema.methods.processRefund = function (refundAmount, reason) {
   if (this.status !== 'completed') {
     throw new Error('Only completed transactions can be refunded');
   }
-  
+
   if (refundAmount > (this.amount - this.refundAmount)) {
     throw new Error('Refund amount exceeds available amount');
   }
-  
+
   this.refundAmount += refundAmount;
   this.refundedAt = new Date();
   this.notes = this.notes ? `${this.notes}\nRefund: ${reason}` : `Refund: ${reason}`;
-  
+
   if (this.refundAmount >= this.amount) {
     this.status = 'refunded';
   }
-  
+
   return this.save();
 };
 
 // Static method to get transactions by user
-transactionSchema.statics.findByUser = function(customerId, options = {}) {
+transactionSchema.statics.findByUser = function (customerId, options = {}) {
   const {
     status,
     type,
@@ -236,7 +271,7 @@ transactionSchema.statics.findByUser = function(customerId, options = {}) {
   } = options;
 
   const query = { customerId };
-  
+
   if (status) query.status = status;
   if (type) query.type = type;
   if (startDate || endDate) {
@@ -252,9 +287,9 @@ transactionSchema.statics.findByUser = function(customerId, options = {}) {
 };
 
 // Static method to get transaction statistics
-transactionSchema.statics.getStats = function(options = {}) {
+transactionSchema.statics.getStats = function (options = {}) {
   const { startDate, endDate } = options;
-  
+
   const matchStage = {};
   if (startDate || endDate) {
     matchStage.createdAt = {};
@@ -285,15 +320,15 @@ transactionSchema.statics.getStats = function(options = {}) {
 };
 
 // Transform output
-transactionSchema.methods.toJSON = function() {
+transactionSchema.methods.toJSON = function () {
   const transaction = this.toObject();
-  
+
   // Add virtual fields
   transaction.totalFees = this.totalFees;
   transaction.totalDiscount = this.totalDiscount;
   transaction.netAmount = this.netAmount;
   transaction.isRefundable = this.isRefundable;
-  
+
   return transaction;
 };
 

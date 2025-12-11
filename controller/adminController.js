@@ -295,3 +295,169 @@ module.exports.deleteAdmin = async (req, res) => {
     });
   }
 };
+
+// Add Points to User Wallet (Admin Only)
+module.exports.addPointsToUser = async (req, res) => {
+  try {
+    const { customerId, points } = req.body;
+
+    // Validate customerId
+    if (!customerId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Customer ID is required'
+      });
+    }
+
+    // Validate points
+    if (!points || typeof points !== 'number' || points <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Points must be a positive number'
+      });
+    }
+
+    // Find customer
+    const CustomerModel = require('../model/Customers');
+    const customer = await CustomerModel.findById(customerId);
+
+    if (!customer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Customer not found'
+      });
+    }
+
+    // Add points to customer wallet
+    customer.points += points;
+    await customer.save();
+
+    // Create Transaction record
+    const TransactionModel = require('../model/Transaction');
+    const transaction = new TransactionModel({
+      customerId: customer._id,
+      userName: customer.username,
+      userEmail: customer.email,
+      amount: points,
+      type: 'credit',
+      status: 'completed',
+      paymentMethod: 'admin',
+      description: `Admin credit - Points added to wallet by admin`,
+      processedAt: new Date(),
+      // Points tracking (all zeros for admin credits)
+      cartTotal: 0,
+      rewardPointsEarned: 0,
+      appPointsShare: 0,
+      giftsPointsShare: 0,
+      treePointsShare: 0,
+      treeDistribution: []
+    });
+
+    await transaction.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Points added successfully',
+      data: {
+        customer: {
+          id: customer._id,
+          username: customer.username,
+          email: customer.email
+        },
+        pointsAdded: points,
+        newBalance: customer.points,
+        transactionId: transaction._id,
+        reference: transaction.reference
+      }
+    });
+
+  } catch (error) {
+    console.error('Add points to user error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+
+// Get App Points Stats (Total points added by admin)
+module.exports.getAppPointsStats = async (req, res) => {
+  try {
+    const { year, month } = req.query;
+
+    // Calculate current month date range
+    const now = new Date();
+    const targetYear = year ? parseInt(year) : now.getFullYear();
+    const targetMonth = month ? parseInt(month) : now.getMonth() + 1;
+
+    const monthStartDate = new Date(targetYear, targetMonth - 1, 1);
+    const monthEndDate = new Date(targetYear, targetMonth, 0, 23, 59, 59, 999);
+
+    const TransactionModel = require('../model/Transaction');
+
+    // Query for admin credits only
+    const baseQuery = {
+      type: 'credit',
+      paymentMethod: 'admin'
+    };
+
+    // Aggregate for this month
+    const monthlyStats = await TransactionModel.aggregate([
+      {
+        $match: {
+          ...baseQuery,
+          createdAt: {
+            $gte: monthStartDate,
+            $lte: monthEndDate
+          }
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          totalPoints: { $sum: '$amount' }
+        }
+      }
+    ]);
+
+    // Aggregate for all time
+    const allTimeStats = await TransactionModel.aggregate([
+      {
+        $match: baseQuery
+      },
+      {
+        $group: {
+          _id: null,
+          totalPoints: { $sum: '$amount' }
+        }
+      }
+    ]);
+
+    const totalPointsThisMonth = monthlyStats[0]?.totalPoints || 0;
+    const totalPointsAllTime = allTimeStats[0]?.totalPoints || 0;
+
+    res.status(200).json({
+      success: true,
+      message: 'App points stats fetched successfully',
+      data: {
+        totalPointsThisMonth: Math.round(totalPointsThisMonth * 100) / 100,
+        totalPointsAllTime: Math.round(totalPointsAllTime * 100) / 100,
+        period: {
+          month: targetMonth,
+          year: targetYear,
+          monthName: new Date(targetYear, targetMonth - 1).toLocaleString('en-US', { month: 'long' })
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('Get app points stats error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Internal server error',
+      error: error.message
+    });
+  }
+};
+

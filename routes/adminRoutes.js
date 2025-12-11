@@ -15,31 +15,47 @@ router.post('/signin', validateAdminLogin(), adminController.signin);
 // Protected Routes (Admin only)
 
 // Get All Admins
-router.get('/all', 
-  authMiddleware.auth, 
-  authMiddleware.isAdmin, 
+router.get('/all',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
   adminController.getAllAdmins
 );
 
 // Get Admin by ID
-router.get('/:id', 
-  authMiddleware.auth, 
-  authMiddleware.isAdmin, 
+router.get('/:id',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
   adminController.getAdminById
 );
 
 // Update Admin
-router.put('/:id', 
-  authMiddleware.auth, 
-  authMiddleware.isAdmin, 
+router.put('/:id',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
   adminController.updateAdmin
 );
 
 // Delete Admin
-router.delete('/:id', 
-  authMiddleware.auth, 
-  authMiddleware.isAdmin, 
+router.delete('/:id',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
   adminController.deleteAdmin
 );
 
+// Add Points to User Wallet
+router.post('/add-points',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
+  adminController.addPointsToUser
+);
+
+// Get App Points Stats
+router.get('/app-points-stats/overview',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
+  adminController.getAppPointsStats
+);
+
 module.exports = router;
+
+

@@ -52,6 +52,12 @@ const Layout = ({ children }) => {
       color: '#ffc107'
     },
     {
+      path: '/points-management',
+      icon: FaBox,
+      label: t('product_management'),
+      color: '#ffc107'
+    },
+    {
       path: '/social-media-links',
       icon: FaShareAlt,
       label: t('socialMediaLinksPage.pageTitle'),

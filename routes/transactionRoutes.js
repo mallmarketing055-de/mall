@@ -16,6 +16,10 @@ router.get('/', transactionController.getAllTransactions);
 // Get Transaction Statistics (must be before /:id route)
 router.get('/stats', transactionController.getTransactionStats);
 
+// Get Admin Monthly Report
+const adminReportController = require('../controller/adminReportController');
+router.get('/admin/monthly-report/view', adminReportController.getAdminMonthlyReport);
+
 // Export Transactions
 router.get('/export/csv', transactionController.exportTransactions);
 

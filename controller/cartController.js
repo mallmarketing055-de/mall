@@ -386,76 +386,166 @@ module.exports.checkout = async (req, res) => {
       });
     }
 
-    // Update customer delivery address
-    await CustomerModel.findByIdAndUpdate(customerId, {
-      $set: { Address: deliveryAddress }
-    });
+    // Get customer
+    const checkoutCustomer = await CustomerModel.findById(customerId);
+    if (!checkoutCustomer) {
+      return res.status(404).json({
+        success: false,
+        message: 'Customer not found'
+      });
+    }
 
     // -------------------------
-    // 1) CALCULATE PRODUCT POINTS
+    // 1) CHECK WALLET BALANCE & DEDUCT PAYMENT
+    // -------------------------
+    const cartTotal = cart.totalAmount || 0;
+
+    if (checkoutCustomer.points < cartTotal) {
+      return res.status(400).json({
+        success: false,
+        message: 'Insufficient wallet balance',
+        required: cartTotal,
+        available: checkoutCustomer.points
+      });
+    }
+
+    // Deduct payment from wallet
+    checkoutCustomer.points -= cartTotal;
+
+    // -------------------------
+    // 2) CALCULATE REWARD POINTS
     // -------------------------
     const productIds = cart.items.map(i => i.productId);
-    console.log(cart.items);
-    console.log("Product IDs in cart:", productIds);
     const products = await ProductModel.find({ _id: { $in: productIds } });
 
-    let totalPoints = 0;
+    let totalRewardPoints = 0;
 
     for (const item of cart.items) {
       const product = products.find(p => p._id.toString() === item.productId);
       if (product) {
         const productPoints = (product.percentage || 0) * item.quantity;
-        totalPoints += productPoints;
+        totalRewardPoints += productPoints;
       }
     }
 
-    console.log("Total product points:", totalPoints);
-
-    // Split points
-    const appPoints = totalPoints * 0.5;
-    let treePoints = totalPoints * 0.5;
-
     // -------------------------
-    // 2) REWARD CHECKOUT CUSTOMER
+    // 3) SPLIT REWARD POINTS (50% / 15% / 35%)
     // -------------------------
-    const checkoutCustomer = await CustomerModel.findById(customerId);
-    const checkoutReward = treePoints * 0.10; // 10%
-    checkoutCustomer.points += checkoutReward;
-    await checkoutCustomer.save();
-
-    treePoints -= checkoutReward;
+    const appPointsShare = totalRewardPoints * 0.50;   // 50% for app
+    const giftsPointsShare = totalRewardPoints * 0.15; // 15% for gifts
+    let treePointsShare = totalRewardPoints * 0.35;    // 35% for tree distribution
 
     // -------------------------
-    // 3) DISTRIBUTE POINTS THROUGH TREE
+    // 4) DISTRIBUTE TREE POINTS (35% pool)
     // -------------------------
+    const treeDistributionLog = [];
+    let remainingTreePoints = treePointsShare;
+    let currentLevel = 0;
+
+    // Give 10% of tree share to buyer
+    const buyerReward = treePointsShare * 0.10;
+    checkoutCustomer.points += buyerReward;
+    remainingTreePoints -= buyerReward;
+
+    treeDistributionLog.push({
+      recipientId: checkoutCustomer._id,
+      recipientUsername: checkoutCustomer.username,
+      amount: buyerReward,
+      level: currentLevel
+    });
+
+    // Traverse up the referral tree
     let currentParentId = checkoutCustomer.parentCustomer;
 
-    while (currentParentId && treePoints > 0) {
+    while (currentParentId && remainingTreePoints > 0) {
       const parent = await CustomerModel.findById(currentParentId);
       if (!parent) break;
 
-      const reward = treePoints * 0.10; // Each parent takes 10% of remaining points
-      parent.points += reward;
+      currentLevel++;
+      const parentReward = remainingTreePoints * 0.10; // 10% of remaining
+      parent.points += parentReward;
       await parent.save();
 
-      treePoints -= reward;
+      treeDistributionLog.push({
+        recipientId: parent._id,
+        recipientUsername: parent.username,
+        amount: parentReward,
+        level: currentLevel
+      });
 
-      // Move to next ancestor
+      remainingTreePoints -= parentReward;
       currentParentId = parent.parentCustomer;
     }
 
+    // Save buyer with updated points
+    await checkoutCustomer.save();
+
     // -------------------------
-    // 4) Clear cart after checkout
+    // 5) CREATE TRANSACTION RECORD
+    // -------------------------
+    const TransactionModel = require('../model/Transaction');
+
+    const transaction = new TransactionModel({
+      customerId: checkoutCustomer._id,
+      userName: checkoutCustomer.username,
+      userEmail: checkoutCustomer.email,
+      amount: cartTotal,
+      type: 'purchase',
+      status: 'completed',
+      description: `Purchase - ${cart.items.length} item(s)`,
+      paymentMethod: 'wallet',
+      items: cart.items.map(item => ({
+        productId: item.productId,
+        productName: item.productName || item.productNameArabic,
+        quantity: item.quantity,
+        price: item.price,
+        subtotal: item.price * item.quantity
+      })),
+      shippingAddress: {
+        street: deliveryAddress || checkoutCustomer.Address
+      },
+      processedAt: new Date(),
+      // Points tracking fields
+      cartTotal: cartTotal,
+      rewardPointsEarned: totalRewardPoints,
+      appPointsShare: appPointsShare,
+      giftsPointsShare: giftsPointsShare,
+      treePointsShare: treePointsShare,
+      treeDistribution: treeDistributionLog
+    });
+
+    await transaction.save();
+
+    // -------------------------
+    // 6) CLEAR CART
     // -------------------------
     await cart.clearCart();
+
+    // Update delivery address
+    if (deliveryAddress) {
+      checkoutCustomer.Address = deliveryAddress;
+      await checkoutCustomer.save();
+    }
 
     return res.status(200).json({
       success: true,
       message: 'Checkout successful',
-      totalDistributedPoints: totalPoints,
-      appPoints,
-      customerPointsAdded: checkoutReward,
-      remainingTreePointsUndistributed: treePoints,
+      data: {
+        transactionId: transaction._id,
+        reference: transaction.reference,
+        cartTotal: cartTotal,
+        pointsDeducted: cartTotal,
+        newWalletBalance: checkoutCustomer.points,
+        rewards: {
+          totalRewardPoints: totalRewardPoints,
+          appShare: appPointsShare,
+          giftsShare: giftsPointsShare,
+          treeShare: treePointsShare,
+          distributedToTree: treePointsShare - remainingTreePoints,
+          undistributed: remainingTreePoints
+        },
+        distributionDetails: treeDistributionLog
+      }
     });
 
   } catch (error) {

@@ -3,7 +3,9 @@ import { toast } from 'react-toastify';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'https://mall-d62z.onrender.com',
+  // baseURL: process.env.REACT_APP_API_URL || 'https://mall-d62z.onrender.com',
+    baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
+
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -37,7 +39,7 @@ api.interceptors.response.use(
       localStorage.removeItem('adminToken');
       localStorage.removeItem('adminData');
       delete api.defaults.headers.common['Authorization'];
-      
+
       // Only show toast if not already on login page
       if (!window.location.pathname.includes('/login')) {
         toast.error('Session expired. Please login again.');
@@ -52,7 +54,7 @@ api.interceptors.response.use(
     } else if (!error.response) {
       toast.error('Network error. Please check your connection.');
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -61,7 +63,7 @@ api.interceptors.response.use(
 export const adminAPI = {
   // Admin Authentication
   login: (credentials) => api.post('/api/Admin/signin', credentials),
-  
+
   // Admin Management
   createAdmin: (adminData) => api.post('/api/Admin/signup', adminData),
   getAllAdmins: () => api.get('/api/Admin/all'),
@@ -98,6 +100,7 @@ export const userAPI = {
 export const transactionAPI = {
   // Transaction Management
   getAllTransactions: (params) => api.get('/api/transactions', { params }),
+  getMonthlyReport: () => api.get('/api/transactions/admin/monthly-report/view'),
   getTransactionById: (id) => api.get(`/api/transactions/${id}`),
   getUserTransactions: (userId, params) => api.get(`/api/transactions/user/${userId}`, { params }),
   exportTransactions: (params) => api.get('/api/transactions/export/csv', {
@@ -122,6 +125,29 @@ export const socialMediaAPI = {
 
   // ✅ Delete a link
   deleteLink: (id) => api.delete(`/api/social-links/${id}`),
+};
+
+// pointsAPI service
+export const pointsAPI = {
+  // Get paginated users with points overview
+  getOverview: (params = {}, token) => {
+    return api.get('/api/Admin/app-points-stats/overview', { params });
+  },
+
+  // Add points to a specific user
+  addPoints: (customerId, points, token) => {
+    return api.post('/api/admin/add-points', { customerId, points });
+  },
+
+  // Optional: get single user's points history
+  getUserPoints: (customerId, params = {}) => {
+    return api.get(`/api/admin/user-points/${customerId}`, { params });
+  },
+
+  // Optional: remove/reduce points (if needed)
+  deductPoints: (customerId, points) => {
+    return api.post('/api/admin/deduct-points', { customerId, points });
+  }
 };
 
 

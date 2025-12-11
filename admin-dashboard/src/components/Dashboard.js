@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Layout from './Layout';
-import { 
-  FaUsers, 
-  FaBox, 
-  FaReceipt, 
+import {
+  FaUsers,
+  FaBox,
+  FaReceipt,
   FaUserShield,
   FaArrowUp,
   FaArrowDown,
@@ -11,10 +11,11 @@ import {
 } from 'react-icons/fa';
 import { userAPI, productAPI, transactionAPI, adminAPI } from '../services/api';
 import { toast } from 'react-toastify';
-import { useTranslation } from "react-i18next"; // ✅ الترجمة
+import { useTranslation } from "react-i18next";
 
 const Dashboard = () => {
-    const { t } = useTranslation(); // ✅ استخدم الترجمة
+  const { t } = useTranslation();
+
   const [stats, setStats] = useState({
     users: { total: 0, change: 0 },
     products: { total: 0, change: 0 },
@@ -22,17 +23,18 @@ const Dashboard = () => {
     admins: { total: 0, change: 0 }
   });
   const [recentTransactions, setRecentTransactions] = useState([]);
+  const [monthlyReport, setMonthlyReport] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDashboardData();
+    fetchMonthlyReport();
   }, []);
 
+  // Fetch main dashboard stats
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-
-      // Fetch all stats in parallel
       const [usersRes, productsRes, transactionsRes, adminsRes] = await Promise.allSettled([
         userAPI.getUserStats(),
         productAPI.getAllProducts({ limit: 1 }),
@@ -40,136 +42,53 @@ const Dashboard = () => {
         adminAPI.getAllAdmins()
       ]);
 
-      // Process results
       const newStats = { ...stats };
 
-      console.log('API Responses:', {
-        users: usersRes.status === 'fulfilled' ? usersRes.value.data : usersRes.reason,
-        products: productsRes.status === 'fulfilled' ? productsRes.value.data : productsRes.reason,
-        transactions: transactionsRes.status === 'fulfilled' ? transactionsRes.value.data : transactionsRes.reason,
-        admins: adminsRes.status === 'fulfilled' ? adminsRes.value.data : adminsRes.reason
-      });
-
-      // Handle Users Stats
+      // Users
       if (usersRes.status === 'fulfilled') {
         const userData = usersRes.value.data;
-        console.log('Raw users response:', userData);
-
-        let userStats = { total: 0, change: 0 };
-        if (userData && userData.data && userData.data.stats) {
-          // Backend returns: { success: true, data: { stats: { totalUsers, activeUsers, newUsersThisMonth } } }
-          userStats = {
-            total: userData.data.stats.totalUsers || 0,
-            change: userData.data.monthlyGrowth || 0
-          };
-        } else if (userData && userData.stats) {
-          // Direct stats in data.stats
-          userStats = {
-            total: userData.stats.totalUsers || 0,
-            change: userData.monthlyGrowth || 0
-          };
-        }
-        newStats.users = userStats;
-        console.log('Users stats:', newStats.users);
+        newStats.users = {
+          total: userData?.data?.stats?.totalUsers || userData?.stats?.totalUsers || 0,
+          change: userData?.data?.monthlyGrowth || userData?.monthlyGrowth || 0
+        };
       }
 
-      // Handle Products Stats
+      // Products
       if (productsRes.status === 'fulfilled') {
         const productData = productsRes.value.data;
-        console.log('Raw products response:', productData);
-
-        let productStats = { total: 0, change: 0 };
-        if (productData && productData.data) {
-          if (productData.data.pagination) {
-            // Response with pagination: { success: true, data: { products: [...], pagination: { totalItems } } }
-            productStats = {
-              total: productData.data.pagination.totalItems || 0,
-              change: 0
-            };
-          } else if (Array.isArray(productData.data)) {
-            // Direct array response
-            productStats = {
-              total: productData.data.length || 0,
-              change: 0
-            };
-          }
-        } else if (productData && Array.isArray(productData)) {
-          // Direct array response
-          productStats = {
-            total: productData.length || 0,
-            change: 0
-          };
-        }
-        newStats.products = productStats;
-        console.log('Products stats:', newStats.products);
+        newStats.products = {
+          total: productData?.data?.pagination?.totalItems || Array.isArray(productData?.data) ? productData.data.length : 0,
+          change: 0
+        };
       }
 
-      // Handle Transactions Stats
+      // Transactions
       if (transactionsRes.status === 'fulfilled') {
         const transactionData = transactionsRes.value.data;
-        console.log('Raw transactions response:', transactionData);
-
-        let transactionStats = { total: 0, change: 0 };
-        if (transactionData && transactionData.data && transactionData.data.stats) {
-          // Backend returns: { success: true, data: { stats: { totalTransactions } } }
-          transactionStats = {
-            total: transactionData.data.stats.totalTransactions || 0,
-            change: transactionData.data.monthlyGrowth || 0
-          };
-        } else if (transactionData && transactionData.stats) {
-          // Direct stats in data.stats
-          transactionStats = {
-            total: transactionData.stats.totalTransactions || 0,
-            change: transactionData.monthlyGrowth || 0
-          };
-        }
-        newStats.transactions = transactionStats;
-        console.log('Transactions stats:', newStats.transactions);
+        newStats.transactions = {
+          total: transactionData?.data?.stats?.totalTransactions || transactionData?.stats?.totalTransactions || 0,
+          change: transactionData?.data?.monthlyGrowth || transactionData?.monthlyGrowth || 0
+        };
       }
 
-      // Handle Admins Stats
+      // Admins
       if (adminsRes.status === 'fulfilled') {
         const adminData = adminsRes.value.data;
-        console.log('Raw admins response:', adminData);
-
-        let adminStats = { total: 0, change: 0 };
-        if (adminData && adminData.data && adminData.data.admins) {
-          // Backend returns: { success: true, data: { admins: [...] } }
-          adminStats = {
-            total: adminData.data.admins.length || 0,
-            change: 0
-          };
-        } else if (adminData && adminData.admins) {
-          // Direct admins in data.admins
-          adminStats = {
-            total: adminData.admins.length || 0,
-            change: 0
-          };
-        } else if (adminData && Array.isArray(adminData)) {
-          // Direct array response
-          adminStats = {
-            total: adminData.length || 0,
-            change: 0
-          };
-        }
-        newStats.admins = adminStats;
-        console.log('Admins stats:', newStats.admins);
+        newStats.admins = {
+          total: adminData?.data?.admins?.length || adminData?.admins?.length || 0,
+          change: 0
+        };
       }
 
       setStats(newStats);
 
-      // Fetch recent transactions
-      try {
-        const recentRes = await transactionAPI.getAllTransactions({
-          limit: 5,
-          sortBy: 'createdAt',
-          sortOrder: 'desc'
-        });
-        console.log('Recent transactions response:', recentRes.data);
-        setRecentTransactions(recentRes.data.data?.transactions || []);
-      } catch (error) {
-        console.error('Error fetching recent transactions:', error);
-      }
+      // Recent Transactions
+      const recentRes = await transactionAPI.getAllTransactions({
+        limit: 5,
+        sortBy: 'createdAt',
+        sortOrder: 'desc'
+      });
+      setRecentTransactions(recentRes.data.data?.transactions || []);
 
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
@@ -179,14 +98,19 @@ const Dashboard = () => {
     }
   };
 
-  const StatCard = ({ title, value, change, icon: Icon, color, colorEnd, link }) => (
-    <div
-      className="stat-card"
-      style={{
-        '--card-color': color,
-        '--card-color-end': colorEnd || color
-      }}
-    >
+  // Fetch Monthly Report
+  const fetchMonthlyReport = async () => {
+    try {
+      const res = await transactionAPI.getMonthlyReport();
+      if (res.data.success) setMonthlyReport(res.data.data);
+    } catch (error) {
+      console.error("Failed to fetch monthly report:", error);
+      toast.error("Failed to load monthly report");
+    }
+  };
+
+  const StatCard = ({ title, value, change, icon: Icon, color, colorEnd }) => (
+    <div className="stat-card" style={{ '--card-color': color, '--card-color-end': colorEnd || color }}>
       <div className="stat-header">
         <div className="stat-info">
           <h3 className="stat-title">{title}</h3>
@@ -206,51 +130,16 @@ const Dashboard = () => {
     </div>
   );
 
-  if (loading) {
-    return (
-      <Layout>
-        <div className="loading">t("dashboardPage.loading")</div>
-      </Layout>
-    );
-  }
-
   return (
     <Layout>
       <div className="dashboard">
+
         {/* Stats Grid */}
         <div className="stats-grid">
-          <StatCard
-            title={t("dashboardPage.totalUsers")}
-            value={stats.users.total}
-            change={stats.users.change}
-            icon={FaUsers}
-            color="#3b82f6"
-            colorEnd="#1d4ed8"
-          />
-          <StatCard
-            title={t("dashboardPage.totalProducts")}
-            value={stats.products.total}
-            change={stats.products.change}
-            icon={FaBox}
-            color="#f59e0b"
-            colorEnd="#d97706"
-          />
-          <StatCard
-            title={t("dashboardPage.totalTransactions")}
-            value={stats.transactions.total}
-            change={stats.transactions.change}
-            icon={FaReceipt}
-            color="#8b5cf6"
-            colorEnd="#7c3aed"
-          />
-          <StatCard
-            title={t("dashboardPage.totalAdmins")}
-            value={stats.admins.total}
-            change={stats.admins.change}
-            icon={FaUserShield}
-            color="#10b981"
-            colorEnd="#059669"
-          />
+          <StatCard title={t("dashboardPage.totalUsers")} value={stats.users.total} change={stats.users.change} icon={FaUsers} color="#3b82f6" colorEnd="#1d4ed8" />
+          <StatCard title={t("dashboardPage.totalProducts")} value={stats.products.total} change={stats.products.change} icon={FaBox} color="#f59e0b" colorEnd="#d97706" />
+          <StatCard title={t("dashboardPage.totalTransactions")} value={stats.transactions.total} change={stats.transactions.change} icon={FaReceipt} color="#8b5cf6" colorEnd="#7c3aed" />
+          <StatCard title={t("dashboardPage.totalAdmins")} value={stats.admins.total} change={stats.admins.change} icon={FaUserShield} color="#10b981" colorEnd="#059669" />
         </div>
 
         {/* Recent Transactions */}
@@ -258,11 +147,7 @@ const Dashboard = () => {
           <div className="card">
             <div className="card-header">
               <h2 className="card-title">{t("dashboardPage.recentTransactions")}</h2>
-              <a href="/transactions" className="btn btn-primary btn-sm">
-                <FaEye /> {t("dashboardPage.viewAll")}
-              </a>
             </div>
-            
             {loading ? (
               <div className="loading">{t("dashboardPage.loading")}</div>
             ) : recentTransactions.length > 0 ? (
@@ -298,13 +183,76 @@ const Dashboard = () => {
               <div className="empty-state">
                 <FaReceipt />
                 <p>{t("dashboardPage.noRecentTransactions")}</p>
-                <p>{t("dashboardPage.debugTransactions", { count: recentTransactions.length })}</p>
-
               </div>
             )}
           </div>
         </div>
+
+        {/* Monthly Report */}
+        <div className="dashboard-section">
+          <div className="card">
+            <div className="card-header">
+              <h2 className="card-title">
+                Monthly Report {monthlyReport ? `- ${monthlyReport.period.monthName} ${monthlyReport.period.year}` : ''}
+              </h2>
+            </div>
+            {monthlyReport ? (
+              <>
+                {/* Summary */}
+                <div className="stats-grid" style={{ marginBottom: '20px' }}>
+                  <StatCard title="Total Purchases" value={monthlyReport.summary.totalPurchases} change={0} icon={FaReceipt} color="#f97316" />
+                  <StatCard title="Total Revenue" value={monthlyReport.summary.totalRevenue} change={0} icon={FaArrowUp} color="#10b981" />
+                  <StatCard title="Reward Points" value={monthlyReport.summary.totalRewardPoints} change={0} icon={FaArrowUp} color="#8b5cf6" />
+                  <StatCard title="App Points" value={monthlyReport.summary.totalAppPoints} change={0} icon={FaReceipt} color="#f97316" />
+                  <StatCard title="Gifts Points" value={monthlyReport.summary.totalGiftsPoints} change={0} icon={FaArrowUp} color="#10b981" />
+                  <StatCard title="Tree Points" value={monthlyReport.summary.totalTreePoints} change={0} icon={FaArrowUp} color="#8b5cf6" />
+                </div>
+
+                {/* Purchases Table */}
+                <div className="table-responsive">
+                  <table className="table">
+                    <thead>
+                      <tr>
+                        <th>User</th>
+                        <th>Email</th>
+                        <th>Amount</th>
+                        <th>Reward Points</th>
+                        <th>App Points</th>
+                        <th>Gifts Points</th>
+                        <th>Tree Points</th>
+                        <th>Date</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {monthlyReport.purchases.map(purchase => (
+                        <tr key={purchase._id}>
+                          <td>{purchase.userName}</td>
+                          <td>{purchase.userEmail}</td>
+                          <td>${purchase.amount.toLocaleString()}</td>
+                          <td>{purchase.rewardPointsEarned}</td>
+                          <td>{purchase.appPointsShare}</td>
+                          <td>{purchase.giftsPointsShare}</td>
+                          <td>{purchase.treePointsShare}</td>
+                          <td>{new Date(purchase.createdAt).toLocaleDateString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
+            ) : (
+              <div className="loading">Loading monthly report...</div>
+            )}
+          </div>
+        </div>
+
       </div>
+      {/* </Layout>
+  );
+};
+
+export default Dashboard; */}
+
 
       <style jsx>{`
       .main-content{
