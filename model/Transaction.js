@@ -36,7 +36,7 @@ const transactionSchema = new mongoose.Schema({
   type: {
     type: String,
     required: true,
-    enum: ['purchase', 'refund', 'payment', 'withdrawal', 'deposit', 'credit'],
+    enum: ['purchase', 'refund', 'payment', 'withdrawal', 'deposit', 'credit', "tree_reward", "tree_reward_shared", "gifts_reward", "gifts_reward_shared", "app_reward", "app_reward_shared"],
     default: 'purchase'
   },
   description: {

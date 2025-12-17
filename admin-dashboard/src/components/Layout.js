@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { 
-  FaTachometerAlt, 
-  FaUsers, 
-  FaBox, 
+import {
+  FaTachometerAlt,
+  FaUsers,
+  FaBox,
   FaShareAlt,
-  FaReceipt, 
+  FaReceipt,
   FaUserShield,
   FaSignOutAlt,
   FaBars,
   FaTimes,
   FaUser,
+  FaCoins,
   FaGlobe
 } from 'react-icons/fa';
 import './Layout.css';
@@ -53,8 +54,8 @@ const Layout = ({ children }) => {
     },
     {
       path: '/points-management',
-      icon: FaBox,
-      label: t('product_management'),
+      icon: FaCoins,
+      label: t('points_management'),
       color: '#ffc107'
     },
     {
@@ -124,12 +125,12 @@ const Layout = ({ children }) => {
             <FaTimes />
           </button>
         </div>
-        
+
         <nav className="sidebar-nav">
           {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
-            
+
             return (
               <Link
                 key={item.path}
@@ -144,7 +145,7 @@ const Layout = ({ children }) => {
             );
           })}
         </nav>
-        
+
         <div className="sidebar-footer">
           <div className="admin-info">
             <FaUser className="admin-avatar" />
@@ -169,11 +170,11 @@ const Layout = ({ children }) => {
           <button className="menu-toggle" onClick={toggleSidebar}>
             <FaBars />
           </button>
-          
+
           <div className="header-title">
             <h1>{menuItems.find(item => item.path === location.pathname)?.label || t('dashboard')}</h1>
           </div>
-          
+
           <div className="header-actions">
             <div className="admin-profile">
               <FaUser className="profile-icon" />

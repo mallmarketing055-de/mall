@@ -432,60 +432,15 @@ module.exports.checkout = async (req, res) => {
     // 3) SPLIT REWARD POINTS (50% / 15% / 35%)
     // -------------------------
     const appPointsShare = totalRewardPoints * 0.50;   // 50% for app
-    const giftsPointsShare = totalRewardPoints * 0.15; // 15% for gifts
+    let giftsPointsShare = totalRewardPoints * 0.15; // 15% for gifts
     let treePointsShare = totalRewardPoints * 0.35;    // 35% for tree distribution
 
     // -------------------------
-    // 4) DISTRIBUTE TREE POINTS (35% pool)
-    // -------------------------
-    const treeDistributionLog = [];
-    let remainingTreePoints = treePointsShare;
-    let currentLevel = 0;
-
-    // Give 10% of tree share to buyer
-    const buyerReward = treePointsShare * 0.10;
-    checkoutCustomer.points += buyerReward;
-    remainingTreePoints -= buyerReward;
-
-    treeDistributionLog.push({
-      recipientId: checkoutCustomer._id,
-      recipientUsername: checkoutCustomer.username,
-      amount: buyerReward,
-      level: currentLevel
-    });
-
-    // Traverse up the referral tree
-    let currentParentId = checkoutCustomer.parentCustomer;
-
-    while (currentParentId && remainingTreePoints > 0) {
-      const parent = await CustomerModel.findById(currentParentId);
-      if (!parent) break;
-
-      currentLevel++;
-      const parentReward = remainingTreePoints * 0.10; // 10% of remaining
-      parent.points += parentReward;
-      await parent.save();
-
-      treeDistributionLog.push({
-        recipientId: parent._id,
-        recipientUsername: parent.username,
-        amount: parentReward,
-        level: currentLevel
-      });
-
-      remainingTreePoints -= parentReward;
-      currentParentId = parent.parentCustomer;
-    }
-
-    // Save buyer with updated points
-    await checkoutCustomer.save();
-
-    // -------------------------
-    // 5) CREATE TRANSACTION RECORD
+    // 3.5) CREATE CHECKOUT TRANSACTION (PURCHASE) FIRST
     // -------------------------
     const TransactionModel = require('../model/Transaction');
 
-    const transaction = new TransactionModel({
+    const checkoutTransaction = new TransactionModel({
       customerId: checkoutCustomer._id,
       userName: checkoutCustomer.username,
       userEmail: checkoutCustomer.email,
@@ -510,11 +465,170 @@ module.exports.checkout = async (req, res) => {
       rewardPointsEarned: totalRewardPoints,
       appPointsShare: appPointsShare,
       giftsPointsShare: giftsPointsShare,
-      treePointsShare: treePointsShare,
-      treeDistribution: treeDistributionLog
+      treePointsShare: treePointsShare
     });
 
-    await transaction.save();
+    await checkoutTransaction.save();
+
+    // -------------------------
+    // 4) DISTRIBUTE TREE POINTS (35% pool)
+    // -------------------------
+    const treeDistributionLog = [];
+    let currentLevel = 0;
+
+    // Buyer (Level 0) gets 0 points
+    treeDistributionLog.push({
+      recipientId: checkoutCustomer._id,
+      recipientUsername: checkoutCustomer.username,
+      amount: 0,
+      level: currentLevel
+    });
+
+    // Traverse up the referral tree to collect all ancestors
+    const ancestors = [];
+    let currentParentId = checkoutCustomer.parentCustomer;
+
+    while (currentParentId) {
+      const parent = await CustomerModel.findById(currentParentId);
+      if (!parent) break;
+
+      currentLevel++;
+      ancestors.push({
+        customer: parent,
+        level: currentLevel
+      });
+
+      currentParentId = parent.parentCustomer;
+    }
+
+    // Track total distributed tree points
+    let totalDistributedTreePoints = 0;
+
+    // Distribute to levels 1-9: each gets 5% of tree pool
+    for (let level = 1; level <= 9; level++) {
+      const ancestor = ancestors.find(a => a.level === level);
+
+      if (ancestor) {
+        const reward = treePointsShare * 0.05; // 5% of tree pool
+        ancestor.customer.points += reward;
+        await ancestor.customer.save();
+
+        totalDistributedTreePoints += reward;
+
+        treeDistributionLog.push({
+          recipientId: ancestor.customer._id,
+          recipientUsername: ancestor.customer.username,
+          amount: reward,
+          level: level
+        });
+
+        // Create transaction for tree reward
+        const treeRewardTransaction = new TransactionModel({
+          customerId: ancestor.customer._id,
+          userName: ancestor.customer.username,
+          userEmail: ancestor.customer.email,
+          amount: reward,
+          type: 'tree_reward',
+          status: 'completed',
+          description: `Tree reward - Level ${level}`,
+          relatedTransaction: checkoutTransaction._id,
+          processedAt: new Date()
+        });
+        await treeRewardTransaction.save();
+      }
+    }
+
+    // Handle level 10 and beyond
+    const level10AndBeyond = ancestors.filter(a => a.level >= 10);
+
+    if (level10AndBeyond.length > 0) {
+      const level10BucketShare = treePointsShare * 0.05; // 5% bucket for level 10+
+      const rewardPerRecipient = level10BucketShare / level10AndBeyond.length;
+
+      for (const ancestor of level10AndBeyond) {
+        ancestor.customer.points += rewardPerRecipient;
+        await ancestor.customer.save();
+
+        totalDistributedTreePoints += rewardPerRecipient;
+
+        treeDistributionLog.push({
+          recipientId: ancestor.customer._id,
+          recipientUsername: ancestor.customer.username,
+          amount: rewardPerRecipient,
+          level: ancestor.level,
+          sharedBucket: true,
+          recipientsInBucket: level10AndBeyond.length
+        });
+
+        // Create transaction for shared tree reward
+        const sharedRewardTransaction = new TransactionModel({
+          customerId: ancestor.customer._id,
+          userName: ancestor.customer.username,
+          userEmail: ancestor.customer.email,
+          amount: rewardPerRecipient,
+          type: 'tree_reward_shared',
+          status: 'completed',
+          description: `Shared tree reward - Level ${ancestor.level} (${level10AndBeyond.length} recipients)`,
+          relatedTransaction: checkoutTransaction._id,
+          processedAt: new Date()
+        });
+        await sharedRewardTransaction.save();
+      }
+    }
+
+    // Calculate unused tree points and add to gifts
+    const maxTreeDepth = Math.min(ancestors.length, 10);
+    const unusedLevels = 10 - maxTreeDepth;
+    const unusedTreePoints = unusedLevels * (treePointsShare * 0.05);
+
+    if (unusedTreePoints > 0) {
+      giftsPointsShare += unusedTreePoints;
+
+      treeDistributionLog.push({
+        recipientId: null,
+        recipientUsername: 'Unused Tree Points',
+        amount: unusedTreePoints,
+        level: null,
+        reason: `Tree depth is ${maxTreeDepth}, ${unusedLevels} level(s) unused - added to gifts`
+      });
+    }
+
+    // Create transaction for gifts points
+    const giftsTransaction = new TransactionModel({
+      customerId: checkoutCustomer._id,
+      userName: 'System',
+      userEmail: 'system@mall.com',
+      amount: giftsPointsShare,
+      type: 'gifts_reward',
+      status: 'completed',
+      description: 'Gifts points from checkout',
+      relatedTransaction: checkoutTransaction._id,
+      processedAt: new Date()
+    });
+    await giftsTransaction.save();
+
+    // Create transaction for app points
+    const appTransaction = new TransactionModel({
+      customerId: checkoutCustomer._id,
+      userName: 'System',
+      userEmail: 'system@mall.com',
+      amount: appPointsShare,
+      type: 'app_reward',
+      status: 'completed',
+      description: 'App revenue points from checkout',
+      relatedTransaction: checkoutTransaction._id,
+      processedAt: new Date()
+    });
+    await appTransaction.save();
+
+    // Save buyer with updated points
+    await checkoutCustomer.save();
+
+    // -------------------------
+    // 5) UPDATE CHECKOUT TRANSACTION WITH TREE DISTRIBUTION LOG
+    // -------------------------
+    checkoutTransaction.treeDistribution = treeDistributionLog;
+    await checkoutTransaction.save();
 
     // -------------------------
     // 6) CLEAR CART
@@ -531,8 +645,8 @@ module.exports.checkout = async (req, res) => {
       success: true,
       message: 'Checkout successful',
       data: {
-        transactionId: transaction._id,
-        reference: transaction.reference,
+        transactionId: checkoutTransaction._id,
+        reference: checkoutTransaction.reference,
         cartTotal: cartTotal,
         pointsDeducted: cartTotal,
         newWalletBalance: checkoutCustomer.points,
@@ -541,8 +655,8 @@ module.exports.checkout = async (req, res) => {
           appShare: appPointsShare,
           giftsShare: giftsPointsShare,
           treeShare: treePointsShare,
-          distributedToTree: treePointsShare - remainingTreePoints,
-          undistributed: remainingTreePoints
+          distributedToTree: totalDistributedTreePoints,
+          undistributed: treePointsShare - totalDistributedTreePoints
         },
         distributionDetails: treeDistributionLog
       }

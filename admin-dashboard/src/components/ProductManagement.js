@@ -26,7 +26,7 @@ const ProductManagement = () => {
   });
   const [errors, setErrors] = useState({});
 
-    const { t, i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   useEffect(() => {
     fetchProducts();
   }, [currentPage, searchTerm]);
@@ -39,7 +39,7 @@ const ProductManagement = () => {
         limit: 10,
         search: searchTerm
       };
-      
+
       const response = await productAPI.getAllProducts(params);
       console.log('Full API Response:', response); // Debug log
       console.log('Response Data:', response.data); // Debug log
@@ -56,6 +56,37 @@ const ProductManagement = () => {
       setLoading(false);
     }
   };
+  const uploadToCloudinary = async (file) => {
+    if (!file) throw new Error("No file provided");
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", "products_unsigned"); // ← replace with your actual unsigned preset name
+    formData.append("folder", "British Automotive"); // folder from your backend example
+
+    try {
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/djwllkrbt/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error?.message || "Cloudinary upload failed");
+      }
+
+      console.log("Cloudinary upload response:", data);
+      return data.secure_url; // The uploaded image URL
+    } catch (err) {
+      console.error("Cloudinary upload error:", err);
+      throw err;
+    }
+  };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -68,12 +99,25 @@ const ProductManagement = () => {
       // Check authentication
       const token = localStorage.getItem('adminToken');
       console.log('Admin token exists:', !!token);
+      let imageUrl = formData.image; // in case URL is already set
+
+      if (formData.imageFile) {
+        imageUrl = await uploadToCloudinary(formData.imageFile);
+      }
 
       const productData = {
         ...formData,
+        image: imageUrl,
         price: parseFloat(formData.price),
         stock: parseInt(formData.stock)
       };
+
+      console.log("Product data:", productData);
+      // const productData = {
+      //   ...formData,
+      //   price: parseFloat(formData.price),
+      //   stock: parseInt(formData.stock)
+      // };
 
       if (editingProduct) {
         console.log('Updating product with ID:', editingProduct._id || editingProduct.id);
@@ -114,15 +158,15 @@ const ProductManagement = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!formData.name.trim()) {
       newErrors.name = 'Product name is required';
     }
-    
+
     if (!formData.nameArabic.trim()) {
       newErrors.nameArabic = 'Arabic name is required';
     }
-    
+
     if (!formData.price || parseFloat(formData.price) <= 0) {
       newErrors.price = 'Valid price is required';
     }
@@ -130,15 +174,15 @@ const ProductManagement = () => {
     if (!formData.percentage || parseFloat(formData.percentage) <= 0) {
       newErrors.percentage = 'Valid percentage is required';
     }
-    
+
     if (!formData.category.trim()) {
       newErrors.category = 'Category is required';
     }
-    
+
     if (!formData.stock || parseInt(formData.stock) < 0) {
       newErrors.stock = 'Valid stock quantity is required';
     }
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -180,7 +224,7 @@ const ProductManagement = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
@@ -224,7 +268,7 @@ const ProductManagement = () => {
                 <table className="modern-table">
                   <thead>
                     <tr>
-                       <th><span>{t("productsPage.productInfo")}</span></th>
+                      <th><span>{t("productsPage.productInfo")}</span></th>
                       <th><span>{t("productsPage.category")}</span></th>
                       <th><span>{t("productsPage.pricing")}</span></th>
                       <th><span>{t("productsPage.stock")}</span></th>
@@ -291,7 +335,7 @@ const ProductManagement = () => {
                     ))}
                   </tbody>
                 </table>
-                
+
                 {products.length === 0 && !loading && (
                   <div className="empty-state">
                     <p>{t("productsPage.noProducts")}</p>
@@ -334,7 +378,7 @@ const ProductManagement = () => {
                 <h2>{editingProduct ? t("productsPage.edit") : t("productsPage.addNew")}</h2>
                 <button className="modal-close" onClick={closeModal}>×</button>
               </div>
-              
+
               <form onSubmit={handleSubmit} className="modal-body">
                 <div className="form-row">
                   <div className="form-group">
@@ -447,21 +491,24 @@ const ProductManagement = () => {
                 <div className="form-group">
                   <label className="form-label">{t("productsPage.form.image")}</label>
                   <input
-                    type="url"
-                    name="image"
-                    value={formData.image}
-                    onChange={handleChange}
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files[0];
+                      if (file) setFormData(prev => ({ ...prev, imageFile: file, image: '' }));
+                    }}
                     className="form-control"
-                    placeholder={t("productsPage.form.image")}
                   />
                 </div>
 
+
+
                 <div className="modal-footer">
                   <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                     {t("productsPage.form.cancel")}
+                    {t("productsPage.form.cancel")}
                   </button>
                   <button type="submit" className="btn btn-primary">
-                   {editingProduct ? t("productsPage.form.update") : t("productsPage.form.create")}
+                    {editingProduct ? t("productsPage.form.update") : t("productsPage.form.create")}
                   </button>
                 </div>
               </form>
