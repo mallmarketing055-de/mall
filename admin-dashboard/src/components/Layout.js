@@ -13,7 +13,8 @@ import {
   FaTimes,
   FaUser,
   FaCoins,
-  FaGlobe
+  FaGlobe,
+  FaClipboardList
 } from 'react-icons/fa';
 import './Layout.css';
 import { useTranslation } from 'react-i18next';
@@ -75,6 +76,12 @@ const Layout = ({ children }) => {
       icon: FaReceipt,
       label: t('transaction_management'),
       color: '#6f42c1'
+    },
+    {
+      path: '/user-jobs',
+      icon: FaClipboardList,
+      label: 'User Jobs',
+      color: '#e83e8c'
     }
   ];
 

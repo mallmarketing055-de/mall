@@ -19,6 +19,7 @@ const qrCodeRoutes = require('./routes/qrCodeRoutes');
 const walletRoutes = require('./routes/getBalanceRouter');
 const filesRoutes = require('./routes/file.Routes');
 const socialMediaRoutes = require("./routes/socialMediaRoutes");
+const dashboardRoutes = require('./routes/dashboardRoutes');
 
 
 dotenv.config({
@@ -71,6 +72,7 @@ app.use('/api/qrcode', qrCodeRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use('/api/files', filesRoutes);
 app.use("/api/social-links", socialMediaRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 
 // Health check endpoint
@@ -100,8 +102,15 @@ app.use((error, req, res, next) => {
     });
 });
 
+const { startWorker } = require('./checkoutWorker');
+
+// بعد initiateDBConnection() في app.listen
 app.listen(PORT, async () => {
     console.log(`Server has been started and is listening to port ${PORT}`);
-    // Call the asynchronous function to initiate the DB connection once the server starts listening.
     await initiateDBConnection();
+
+    // Start the worker internally
+    startWorker().catch(err => {
+        console.error('[Worker] Failed to start internally:', err);
+    });
 });

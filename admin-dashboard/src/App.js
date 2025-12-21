@@ -13,26 +13,27 @@ import TransactionManagement from './components/TransactionManagement';
 import "./i18n"; // <-- make sure this is here
 import SocialMediaLinks from './components/SocialMediaManagement';
 import AppPointsManagement from './components/PointsManagement';
+import UserJobsDashboard from './components/UserJobsDashboard';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
-  
+
   return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
 // Public Route Component (redirect to dashboard if already logged in)
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
-  
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
-  
+
   return !isAuthenticated ? children : <Navigate to="/dashboard" />;
 };
 
@@ -41,89 +42,98 @@ function App() {
 
   return (
     <AuthProvider>
-      
+
       <Router basename='/'>
         <div className="App">
           <Routes>
             {/* Public Routes */}
-            <Route 
-              path="/login" 
+            <Route
+              path="/login"
               element={
                 <PublicRoute>
                   <Login />
                 </PublicRoute>
-              } 
+              }
             />
-            
+
             {/* Protected Routes */}
-            <Route 
-              path="/dashboard" 
+            <Route
+              path="/dashboard"
               element={
                 <ProtectedRoute>
                   <Dashboard />
                 </ProtectedRoute>
-              } 
+              }
             />
-            
-            <Route 
-              path="/admin-management" 
+
+            <Route
+              path="/admin-management"
               element={
                 <ProtectedRoute>
                   <AdminManagement />
                 </ProtectedRoute>
-              } 
+              }
             />
-            
-            <Route 
-              path="/products" 
+
+            <Route
+              path="/products"
               element={
                 <ProtectedRoute>
                   <ProductManagement />
                 </ProtectedRoute>
-              } 
+              }
             />
 
-             <Route 
-              path="/points-management" 
+            <Route
+              path="/points-management"
               element={
                 <ProtectedRoute>
                   <AppPointsManagement />
                 </ProtectedRoute>
-              } 
+              }
             />
 
-            <Route 
-              path="/social-media-links" 
+            <Route
+              path="/social-media-links"
               element={
                 <ProtectedRoute>
                   <SocialMediaLinks />
                 </ProtectedRoute>
-              } 
+              }
             />
-            
-            <Route 
-              path="/users" 
+
+            <Route
+              path="/users"
               element={
                 <ProtectedRoute>
                   <UserManagement />
                 </ProtectedRoute>
-              } 
+              }
             />
-            
-            <Route 
-              path="/transactions" 
+
+            <Route
+              path="/transactions"
               element={
                 <ProtectedRoute>
                   <TransactionManagement />
                 </ProtectedRoute>
-              } 
+              }
             />
-            
+
+            <Route
+              path="/user-jobs"
+              element={
+                <ProtectedRoute>
+                  <UserJobsDashboard />
+                </ProtectedRoute>
+              }
+            />
+
             {/* Default redirect */}
             <Route path="/" element={<Navigate to="/dashboard" />} />
             <Route path="*" element={<Navigate to="/dashboard" />} />
           </Routes>
-          
+
           {/* Toast notifications */}
           <ToastContainer
             position="top-right"

@@ -272,6 +272,7 @@ const ProductManagement = () => {
                       <th><span>{t("productsPage.category")}</span></th>
                       <th><span>{t("productsPage.pricing")}</span></th>
                       <th><span>{t("productsPage.stock")}</span></th>
+                      <th><span>{t("Sold")}</span></th>
                       <th><span>{t("productsPage.actions")}</span></th>
                     </tr>
                   </thead>
@@ -310,6 +311,13 @@ const ProductManagement = () => {
                           <div className="stock-info">
                             <span className={`stock-badge ${product.stock > 10 ? 'in-stock' : product.stock > 0 ? 'low-stock' : 'out-of-stock'}`}>
                               {product.stock} units
+                            </span>
+                          </div>
+                        </td>
+                        <td className="stock-cell">
+                          <div className="stock-info">
+                            <span className="stock-badge in-stock">
+                              {product.invoice_item_quantity_total || 0}
                             </span>
                           </div>
                         </td>

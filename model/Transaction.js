@@ -166,7 +166,7 @@ const transactionSchema = new mongoose.Schema({
     },
     recipientUsername: String,
     amount: Number,
-    level: Number
+    level: String
   }]
 }, {
   timestamps: true

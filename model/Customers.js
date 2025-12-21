@@ -147,6 +147,11 @@ const customerSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'inactive', 'suspended'],
     default: 'active'
+  },
+  levelLetter: {
+    type: String,
+    enum: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'],
+    default: 'A'
   }
 }, {
   timestamps: true

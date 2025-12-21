@@ -3,8 +3,8 @@ import { toast } from 'react-toastify';
 
 // Create axios instance
 const api = axios.create({
-  // baseURL: process.env.REACT_APP_API_URL || 'https://mall-d62z.onrender.com',
-    baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
+  baseURL: process.env.REACT_APP_API_URL || 'https://mall-d62z.onrender.com',
+  // baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
 
   timeout: 10000,
   headers: {
@@ -148,6 +148,19 @@ export const pointsAPI = {
   deductPoints: (customerId, points) => {
     return api.post('/api/admin/deduct-points', { customerId, points });
   }
+};
+
+// dashboardAPI service
+export const dashboardAPI = {
+  // Get all jobs for a specific user
+  getUserJobs: (customerId) => {
+    const token = localStorage.getItem('adminToken');
+    return api.get(`/api/dashboard/user-jobs/${customerId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+  },
 };
 
 
