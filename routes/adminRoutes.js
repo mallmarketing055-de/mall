@@ -56,6 +56,27 @@ router.get('/app-points-stats/overview',
   adminController.getAppPointsStats
 );
 
+// Reward Settings Routes
+const rewardSettingsController = require('../controller/rewardSettingsController');
+
+router.get('/reward-settings/overview',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
+  rewardSettingsController.getRewardSettings
+);
+
+router.post('/reward-settings/overview',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
+  rewardSettingsController.updateRewardSettings
+);
+
+router.post('/reward-settings/add-gifts-balance',
+  authMiddleware.auth,
+  authMiddleware.isAdmin,
+  rewardSettingsController.addManualPoolFunds
+);
+
 module.exports = router;
 
 

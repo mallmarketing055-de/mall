@@ -4,12 +4,13 @@ const CustomerModel = require('../model/Customers');
 const ProductModel = require('../model/Product');
 const TransactionModel = require('../model/Transaction');
 const CheckoutJob = require('../model/CheckoutJob');
+const RewardSettings = require('../model/RewardSettings');
+// const ProductModel = require('../model/Product');
 
 
 // Add Item to Cart
 module.exports.addToCart = async (req, res) => {
   try {
-    // Check for validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
       return res.status(400).json({
@@ -19,38 +20,49 @@ module.exports.addToCart = async (req, res) => {
       });
     }
 
-    // Extract customer ID from JWT token
-    const customerId = req.user.Customer_id || req.user.CustomerId || req.user.customer_id || req.user.customerId;
+    // Extract customer ID from token
+    const customerId =
+      req.user.Customer_id ||
+      req.user.CustomerId ||
+      req.user.customer_id ||
+      req.user.customerId;
 
     if (!customerId) {
       return res.status(400).json({
         success: false,
-        message: 'Customer ID not found in token',
-        debug: req.user
+        message: 'Customer ID not found in token'
       });
     }
 
-    const { productId, productName, productNameArabic, price, quantity = 1, unit = 'نقطة', image } = req.body;
+    const { productId, quantity = 1 } = req.body;
 
-    // Find or create cart for customer
+    // 🔴 Fetch product from DB (SOURCE OF TRUTH)
+    const product = await ProductModel.findById(productId);
+
+    if (!product || !product.isActive) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found or inactive'
+      });
+    }
+
+    // Find or create cart
     let cart = await CartModel.findOne({ customerId });
-
     if (!cart) {
       cart = new CartModel({ customerId, items: [] });
     }
 
-    // Prepare product data
+    // ✅ Product data ONLY from DB
     const productData = {
-      productId,
-      productName,
-      productNameArabic,
-      price,
+      productId: product._id,
+      productName: product.name,
+      productNameArabic: product.nameArabic,
+      price: product.price,          // SAFE
       quantity,
-      unit,
-      image
+      unit: product.unit || 'نقطة',
+      image: product.image
     };
 
-    // Add item to cart
     await cart.addItem(productData);
 
     res.status(200).json({
@@ -545,56 +557,65 @@ module.exports.checkout = async (req, res) => {
       });
     }
 
-    // 2) Get customer
-    const checkoutCustomer = await CustomerModel.findById(customerId);
-    if (!checkoutCustomer) {
-      return res.status(404).json({
-        success: false,
-        message: 'Customer not found'
-      });
-    }
-
-    // 3) CHECK WALLET BALANCE & DEDUCT PAYMENT
-    const cartTotal = cart.totalAmount || 0;
-
-    if (checkoutCustomer.points < cartTotal) {
-      return res.status(400).json({
-        success: false,
-        message: 'Insufficient wallet balance',
-        required: cartTotal,
-        available: checkoutCustomer.points
-      });
-    }
-
-    // Deduct payment from wallet
-    checkoutCustomer.points -= cartTotal;
-    await checkoutCustomer.save();
-
-    // 4) CALCULATE REWARD POINTS
+    // 4) FETCH PRODUCT DATA (Source of Truth for price & rewards)
     const productIds = cart.items.map(i => i.productId);
     const products = await ProductModel.find({ _id: { $in: productIds } });
 
+    // Recalculate actual amount to deduct (Prevent price manipulation)
+    let actualCartTotal = 0;
     let totalRewardPoints = 0;
 
     for (const item of cart.items) {
       const product = products.find(p => p._id.toString() === item.productId.toString());
       if (product) {
+        // Use DB price, IGNORE cart.totalAmount
+        actualCartTotal += product.price * item.quantity;
+        // Calculate rewards based on product percentage
         const productPoints = (product.percentage || 0) * item.quantity;
         totalRewardPoints += productPoints;
       }
     }
 
-    // 5) SPLIT REWARD POINTS (50% / 15% / 35%)
-    const appPointsShare = totalRewardPoints * 0.35;   // 35% for app
-    const giftsPointsShare = totalRewardPoints * 0.15; // 15% for gifts
-    const treePointsShare = totalRewardPoints * 0.50;  // 50% for tree distribution
+    // 5) Deduct Payment using Atomic Operation
+    // ATOMIC UPDATE: Check balance and deduct in one operation
+    const checkoutCustomer = await CustomerModel.findOneAndUpdate(
+      {
+        _id: customerId,
+        points: { $gte: actualCartTotal }
+      },
+      { $inc: { points: -actualCartTotal } },
+      { new: true }
+    );
 
-    // 6) CREATE CHECKOUT TRANSACTION
+    // Handle failure cases
+    if (!checkoutCustomer) {
+      const existingCustomer = await CustomerModel.findById(customerId).select('points');
+      return res.status(400).json({
+        success: false,
+        message: 'Insufficient wallet balance',
+        required: actualCartTotal,
+        available: existingCustomer?.points || 0
+      });
+    }
+
+    // 6) FETCH REWARD CONFIG & SPLIT
+    const config = await RewardSettings.getSettings();
+    const treePointsShare = totalRewardPoints * (config.treeShare || 0.50);
+    const giftsPointsShare = totalRewardPoints * (config.giftsShare || 0.15);
+    const appPointsShare = totalRewardPoints * (config.appShare || 0.30);
+    const directReferralShare = totalRewardPoints * (config.firstPaymentReferral || 0.05);
+
+    console.log('Total Reward Points:', totalRewardPoints);
+    console.log('App Points Share:', appPointsShare);
+    console.log('Gifts Points Share:', giftsPointsShare);
+    console.log('Tree Points Share:', treePointsShare);
+    console.log('Direct Referral Share:', directReferralShare);
+    // 7) CREATE CHECKOUT TRANSACTION
     const checkoutTransaction = new TransactionModel({
       customerId: checkoutCustomer._id,
       userName: checkoutCustomer.username,
       userEmail: checkoutCustomer.email,
-      amount: cartTotal,
+      amount: actualCartTotal,
       type: 'purchase',
       status: 'completed',
       description: `Purchase - ${cart.items.length} item(s)`,
@@ -603,7 +624,7 @@ module.exports.checkout = async (req, res) => {
         productId: item.productId,
         productName: item.productName || item.productNameArabic,
         quantity: item.quantity,
-        price: item.price,
+        price: item.price, // Note: This might still show cart price in history, but actual deduction used DB price above
         subtotal: item.price * item.quantity
       })),
       shippingAddress: {
@@ -611,11 +632,12 @@ module.exports.checkout = async (req, res) => {
       },
       processedAt: new Date(),
       // Points tracking fields
-      cartTotal: cartTotal,
+      cartTotal: actualCartTotal,
       rewardPointsEarned: totalRewardPoints,
       appPointsShare: appPointsShare,
       giftsPointsShare: giftsPointsShare,
-      treePointsShare: treePointsShare
+      treePointsShare: treePointsShare,
+      directReferralShare: directReferralShare
     });
 
     await checkoutTransaction.save();
@@ -648,6 +670,7 @@ module.exports.checkout = async (req, res) => {
           treePointsShare,
           appPointsShare,
           giftsPointsShare,
+          directReferralShare,
           totalRewardPoints
         }
       });
@@ -667,19 +690,21 @@ module.exports.checkout = async (req, res) => {
       data: {
         transactionId: checkoutTransaction._id,
         reference: checkoutTransaction.reference,
-        cartTotal: cartTotal,
-        pointsDeducted: cartTotal,
+        cartTotal: actualCartTotal,
+        pointsDeducted: actualCartTotal,
         newWalletBalance: checkoutCustomer.points,
         rewards: {
           totalRewardPoints: totalRewardPoints,
           appShare: appPointsShare,
           giftsShare: giftsPointsShare,
           treeShare: treePointsShare,
+          referralShare: directReferralShare,
           status: 'processing' // Indicates rewards are being processed in background
         },
         note: 'Tree rewards and level upgrades are being processed in the background'
       }
     });
+
 
   } catch (error) {
     console.error('Checkout error:', error);

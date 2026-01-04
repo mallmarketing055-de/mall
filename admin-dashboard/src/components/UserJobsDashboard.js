@@ -2,20 +2,19 @@ import React, { useState } from 'react';
 import Layout from './Layout';
 import { dashboardAPI } from '../services/api';
 import './UserJobsDashboard.css';
+import { useTranslation } from "react-i18next";
 
 const UserJobsDashboard = () => {
+    const { t } = useTranslation();
     const [userId, setUserId] = useState('');
     const [jobsData, setJobsData] = useState(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [searched, setSearched] = useState(false);
 
-    /**
-     * Fetch user jobs from backend using dashboardAPI
-     */
     const fetchUserJobs = async (customerId) => {
         if (!customerId || !customerId.trim()) {
-            setError('Please enter a valid User ID');
+            setError(t("userJobsPage.errorValidId"));
             return;
         }
 
@@ -25,36 +24,29 @@ const UserJobsDashboard = () => {
 
         try {
             const response = await dashboardAPI.getUserJobs(customerId);
-
             if (response.data.success) {
                 setJobsData(response.data);
                 setSearched(true);
             } else {
-                setError(response.data.message || 'Failed to fetch jobs');
+                setError(response.data.message || t("userJobsPage.loadingJobs"));
             }
         } catch (err) {
             console.error('Error fetching user jobs:', err);
             setError(
                 err.response?.data?.message ||
                 err.message ||
-                'Failed to fetch user jobs'
+                t("userJobsPage.loadingJobs")
             );
         } finally {
             setLoading(false);
         }
     };
 
-    /**
-     * Handle search button click
-     */
     const handleSearch = (e) => {
         e.preventDefault();
         fetchUserJobs(userId);
     };
 
-    /**
-     * Format date for display
-     */
     const formatDate = (dateString) => {
         if (!dateString) return 'N/A';
         const date = new Date(dateString);
@@ -67,9 +59,6 @@ const UserJobsDashboard = () => {
         });
     };
 
-    /**
-     * Get status badge class
-     */
     const getStatusClass = (status) => {
         const statusClasses = {
             pending: 'status-pending',
@@ -80,9 +69,6 @@ const UserJobsDashboard = () => {
         return statusClasses[status] || '';
     };
 
-    /**
-     * Get status icon
-     */
     const getStatusIcon = (status) => {
         const icons = {
             pending: '⏳',
@@ -97,21 +83,21 @@ const UserJobsDashboard = () => {
         <Layout>
             <div className="user-jobs-dashboard">
                 <div className="dashboard-header">
-                    <h1>User Checkout Jobs</h1>
-                    <p className="subtitle">View checkout job status and history for any user</p>
+                    <h1>{t("userJobsPage.title")}</h1>
+                    <p className="subtitle">{t("userJobsPage.subtitle")}</p>
                 </div>
 
                 {/* Search Form */}
                 <div className="search-section">
                     <form onSubmit={handleSearch} className="search-form">
                         <div className="input-group">
-                            <label htmlFor="userId">User ID (Customer ID)</label>
+                            <label htmlFor="userId">{t("userJobsPage.userIdLabel")}</label>
                             <input
                                 type="text"
                                 id="userId"
                                 value={userId}
                                 onChange={(e) => setUserId(e.target.value)}
-                                placeholder="Enter customer ID..."
+                                placeholder={t("userJobsPage.searchPlaceholder")}
                                 className="user-id-input"
                             />
                         </div>
@@ -120,12 +106,11 @@ const UserJobsDashboard = () => {
                             className="search-button"
                             disabled={loading}
                         >
-                            {loading ? 'Searching...' : 'Search Jobs'}
+                            {loading ? t("userJobsPage.searching") : t("userJobsPage.searchButton")}
                         </button>
                     </form>
                 </div>
 
-                {/* Error Message */}
                 {error && (
                     <div className="error-message">
                         <span className="error-icon">⚠️</span>
@@ -133,23 +118,20 @@ const UserJobsDashboard = () => {
                     </div>
                 )}
 
-                {/* Loading State */}
                 {loading && (
                     <div className="loading-container">
                         <div className="spinner"></div>
-                        <p>Loading jobs...</p>
+                        <p>{t("userJobsPage.loadingJobs")}</p>
                     </div>
                 )}
 
-                {/* Results */}
                 {!loading && searched && jobsData && (
                     <div className="results-section">
-                        {/* Summary Cards */}
                         <div className="summary-cards">
                             <div className="summary-card total">
                                 <div className="card-icon">📊</div>
                                 <div className="card-content">
-                                    <h3>Total Jobs</h3>
+                                    <h3>{t("userJobsPage.totalJobs")}</h3>
                                     <p className="card-value">{jobsData.totalJobs}</p>
                                 </div>
                             </div>
@@ -157,7 +139,7 @@ const UserJobsDashboard = () => {
                             <div className="summary-card pending">
                                 <div className="card-icon">⏳</div>
                                 <div className="card-content">
-                                    <h3>Pending</h3>
+                                    <h3>{t("userJobsPage.pending")}</h3>
                                     <p className="card-value">{jobsData.statusSummary.pending}</p>
                                 </div>
                             </div>
@@ -165,7 +147,7 @@ const UserJobsDashboard = () => {
                             <div className="summary-card processing">
                                 <div className="card-icon">⚡</div>
                                 <div className="card-content">
-                                    <h3>Processing</h3>
+                                    <h3>{t("userJobsPage.processing")}</h3>
                                     <p className="card-value">{jobsData.statusSummary.processing}</p>
                                 </div>
                             </div>
@@ -173,7 +155,7 @@ const UserJobsDashboard = () => {
                             <div className="summary-card completed">
                                 <div className="card-icon">✅</div>
                                 <div className="card-content">
-                                    <h3>Completed</h3>
+                                    <h3>{t("userJobsPage.completed")}</h3>
                                     <p className="card-value">{jobsData.statusSummary.completed}</p>
                                 </div>
                             </div>
@@ -181,27 +163,26 @@ const UserJobsDashboard = () => {
                             <div className="summary-card failed">
                                 <div className="card-icon">❌</div>
                                 <div className="card-content">
-                                    <h3>Failed</h3>
+                                    <h3>{t("userJobsPage.failed")}</h3>
                                     <p className="card-value">{jobsData.statusSummary.failed}</p>
                                 </div>
                             </div>
                         </div>
 
-                        {/* Jobs Table */}
                         {jobsData.jobs.length > 0 ? (
                             <div className="jobs-table-container">
-                                <h2>Job History</h2>
+                                <h2>{t("userJobsPage.jobHistory")}</h2>
                                 <div className="table-wrapper">
                                     <table className="jobs-table">
                                         <thead>
                                             <tr>
-                                                <th>Transaction</th>
-                                                <th>Status</th>
-                                                <th>Amount</th>
-                                                <th>Attempts</th>
-                                                <th>Created</th>
-                                                <th>Completed</th>
-                                                <th>Details</th>
+                                                <th>{t("userJobsPage.transaction")}</th>
+                                                <th>{t("userJobsPage.status")}</th>
+                                                <th>{t("userJobsPage.amount")}</th>
+                                                <th>{t("userJobsPage.attempts")}</th>
+                                                <th>{t("userJobsPage.created")}</th>
+                                                <th>{t("userJobsPage.completedAt")}</th>
+                                                <th>{t("userJobsPage.details")}</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -217,7 +198,7 @@ const UserJobsDashboard = () => {
                                                     </td>
                                                     <td>
                                                         <span className={`status-badge ${getStatusClass(job.status)}`}>
-                                                            {getStatusIcon(job.status)} {job.status}
+                                                            {getStatusIcon(job.status)} {t(`userJobsPage.${job.status}`)}
                                                         </span>
                                                     </td>
                                                     <td className="amount-cell">{job.transactionAmount.toFixed(2)}</td>
@@ -233,7 +214,7 @@ const UserJobsDashboard = () => {
                                                             className="details-button"
                                                             onClick={() => alert(JSON.stringify(job, null, 2))}
                                                         >
-                                                            View
+                                                            {t("userJobsPage.view")}
                                                         </button>
                                                     </td>
                                                 </tr>
@@ -244,18 +225,17 @@ const UserJobsDashboard = () => {
                             </div>
                         ) : (
                             <div className="no-jobs-message">
-                                <p>No jobs found for this user.</p>
+                                <p>{t("userJobsPage.noJobs")}</p>
                             </div>
                         )}
                     </div>
                 )}
 
-                {/* Initial State */}
                 {!loading && !searched && !error && (
                     <div className="initial-state">
                         <div className="empty-state-icon">🔍</div>
-                        <h3>Search for User Jobs</h3>
-                        <p>Enter a customer ID above to view their checkout job history</p>
+                        <h3>{t("userJobsPage.initialTitle")}</h3>
+                        <p>{t("userJobsPage.initialSubtitle")}</p>
                     </div>
                 )}
             </div>

@@ -14,6 +14,8 @@ import "./i18n"; // <-- make sure this is here
 import SocialMediaLinks from './components/SocialMediaManagement';
 import AppPointsManagement from './components/PointsManagement';
 import UserJobsDashboard from './components/UserJobsDashboard';
+import CourseManagement from './components/CourseManagement';
+import RewardSettingsManagement from './components/RewardSettingsManagement';
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -125,6 +127,24 @@ function App() {
               element={
                 <ProtectedRoute>
                   <UserJobsDashboard />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/courses"
+              element={
+                <ProtectedRoute>
+                  <CourseManagement />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/reward-settings"
+              element={
+                <ProtectedRoute>
+                  <RewardSettingsManagement />
                 </ProtectedRoute>
               }
             />

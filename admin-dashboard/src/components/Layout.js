@@ -14,7 +14,9 @@ import {
   FaUser,
   FaCoins,
   FaGlobe,
-  FaClipboardList
+  FaClipboardList,
+  FaGraduationCap,
+  FaGift
 } from 'react-icons/fa';
 import './Layout.css';
 import { useTranslation } from 'react-i18next';
@@ -80,8 +82,20 @@ const Layout = ({ children }) => {
     {
       path: '/user-jobs',
       icon: FaClipboardList,
-      label: 'User Jobs',
+      label: t('user_jobs'),
       color: '#e83e8c'
+    },
+    {
+      path: '/courses',
+      icon: FaGraduationCap,
+      label: t('cources_management'),
+      color: '#28a745'
+    },
+    {
+      path: '/reward-settings',
+      icon: FaGift,
+      label: 'Reward Settings',
+      color: '#e67e22'
     }
   ];
 

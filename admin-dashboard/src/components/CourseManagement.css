@@ -1,0 +1,9 @@
+/* 
+ This file is effectively replaced by the scoped styled-jsx block in CourseManagement.js 
+ to strictly match the reference implementation in ProductManagement.js.
+ keeping it empty or minimal to avoid conflicts, but ensuring the file exists 
+ as requested in the deliverables list.
+*/
+.course-management-placeholder {
+    display: none;
+}

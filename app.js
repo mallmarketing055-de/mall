@@ -20,6 +20,7 @@ const walletRoutes = require('./routes/getBalanceRouter');
 const filesRoutes = require('./routes/file.Routes');
 const socialMediaRoutes = require("./routes/socialMediaRoutes");
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const courseRoutes = require('./routes/courseRoutes');
 
 
 dotenv.config({
@@ -73,6 +74,7 @@ app.use('/api/wallet', walletRoutes);
 app.use('/api/files', filesRoutes);
 app.use("/api/social-links", socialMediaRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/courses', courseRoutes);
 
 
 // Health check endpoint

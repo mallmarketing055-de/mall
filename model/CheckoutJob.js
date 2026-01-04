@@ -23,7 +23,8 @@ const checkoutJobSchema = new mongoose.Schema({
         treePointsShare: { type: Number, required: true },
         appPointsShare: { type: Number, required: true },
         giftsPointsShare: { type: Number, required: true },
-        totalRewardPoints: { type: Number, required: true }
+        totalRewardPoints: { type: Number, required: true },
+        directReferralShare: { type: Number, required: true },
     },
     attempts: {
         type: Number,

@@ -3,8 +3,8 @@ import { toast } from 'react-toastify';
 
 // Create axios instance
 const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'https://mall-d62z.onrender.com',
-  // baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
+  // baseURL: process.env.REACT_APP_API_URL || 'https://mall-d62z.onrender.com',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:3000',
 
   timeout: 10000,
   headers: {
@@ -161,6 +161,24 @@ export const dashboardAPI = {
       },
     });
   },
+};
+
+export const courseAPI = {
+  // Public/User
+  getAllCourses: () => api.get('/api/courses'),
+  subscribeToCourse: (courseId) => api.post(`/api/courses/${courseId}/subscribe`),
+
+  // Admin
+  getAllCoursesAdmin: () => api.get('/api/courses/admin/all'),
+  getCourseStats: () => api.get('/api/courses/admin/stats'),
+  createCourse: (courseData) => api.post('/api/courses', courseData),
+  updateCourse: (id, courseData) => api.put(`/api/courses/${id}`, courseData),
+};
+
+export const rewardSettingsAPI = {
+  getSettings: () => api.get('/api/admin/reward-settings/overview'),
+  updateSettings: (settings) => api.post('/api/admin/reward-settings/overview', settings),
+  addToGiftsBalance: (amount) => api.post('/api/admin/reward-settings/add-gifts-balance', { amount }),
 };
 
 

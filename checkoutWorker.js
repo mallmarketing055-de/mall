@@ -24,16 +24,53 @@ const TREE_LEVEL_PERCENTAGE = 0.10; // 10%
 let isShuttingDown = false;
 let activeJob = null;
 
+const RewardSettings = require('./model/RewardSettings');
+
+// ============================================
+// SETTINGS SERVICE
+// ============================================
+const SettingsModel = {
+    async getCheckoutConfig() {
+        try {
+            const settings = await RewardSettings.getSettings();
+            return settings.toObject(); // return plain object
+        } catch (error) {
+            console.error('[Worker] Failed to fetch reward settings, using defaults:', error);
+            // Fallback defaults (Fixed points)
+            return {
+                levelGifts: { "B": 10, "D": 20, "F": 30, "H": 40, "J": 50 },
+                firstPaymentReferral: 0.05,
+                signupPoints: { enabled: true, amount: 50 },
+                enableLevelGifts: true
+            };
+        }
+    }
+};
+
 // ============================================
 // HELPER FUNCTIONS
 // ============================================
 
 function isActiveCustomer(customer) {
-    // return true
     return customer.referralStatus === 'active' && customer.isVerified === true;
 }
 
-async function upgradeTreeLevels(startCustomerId) {
+/**
+ * Checks if a user has made any previous completed purchases.
+ * Returns true if this is their first purchase.
+ */
+async function isFirstPurchase(customerId, currentTransactionId) {
+    const count = await TransactionModel.countDocuments({
+        customerId: customerId,
+        status: 'completed',
+        type: 'purchase',
+        _id: { $ne: currentTransactionId }
+    });
+    console.log(count)
+    return count === 0;
+}
+
+async function upgradeTreeLevels(startCustomerId, checkoutTransaction, config) {
     let currentCustomerId = startCustomerId;
 
     while (currentCustomerId) {
@@ -65,10 +102,48 @@ async function upgradeTreeLevels(startCustomerId) {
                 countByLevel[level] >= 2 &&
                 LEVELS.indexOf(nextLevel) > LEVELS.indexOf(customer.levelLetter)
             ) {
+                // 1. Upgrade Level
                 customer.levelLetter = nextLevel;
+
+                // 2. Level Upgrade Gift (Rule 1)
+                // NOW A FIXED AMOUNT DEDUCTED FROM GLOBAL POOL
+                if (config.enableLevelGifts && config.levelGifts && config.levelGifts[nextLevel]) {
+                    const bonusAmount = config.levelGifts[nextLevel];
+
+                    if (bonusAmount > 0) {
+                        try {
+                            // Check if gifts points balance is sufficient (system expense from pool)
+                            const balanceCheck = await RewardSettings.checkGiftsBalance(bonusAmount);
+
+                            if (balanceCheck.sufficient) {
+                                customer.points = Math.round((customer.points + bonusAmount) * 100) / 100;
+
+                                // Log Transaction as debit from pool
+                                await TransactionModel.create({
+                                    customerId: customer._id,
+                                    userName: customer.username,
+                                    userEmail: customer.email,
+                                    amount: bonusAmount,
+                                    type: 'level_gift_reward',
+                                    status: 'completed',
+                                    description: `Level Upgrade Gift - Reached Level ${nextLevel} (Deducted from Global Gifts Pool)`,
+                                    relatedTransaction: checkoutTransaction._id,
+                                    processedAt: new Date()
+                                });
+
+                                console.log(`  🎁 [Level] ${customer.username} reached Level ${nextLevel}, awarded ${bonusAmount} pts`);
+                            } else {
+                                console.log(`  ⚠️ [Level] Insufficient Gifts Pool Balance for ${customer.username}`);
+                            }
+                        } catch (err) {
+                            console.error(`  ❌ [Level] Error:`, err.message);
+                        }
+                    }
+                }
+
                 await customer.save();
                 console.log(`  ✓ Upgraded ${customer.username} to level ${nextLevel}`);
-                break;
+                break; // One upgrade per check
             }
         }
 
@@ -87,100 +162,110 @@ async function distributeTreePoints({ buyer, treePointsShare, checkoutTransactio
         const parent = await CustomerModel.findById(currentParentId)
             .select('parentCustomer levelLetter referralStatus isVerified points username email');
 
-        console.log(parent)
         if (!parent) break;
         currentParentId = parent.parentCustomer;
 
-        // Skip inactive users
+        // Skip inactive / unverified users
         if (!isActiveCustomer(parent)) {
-            console.log(`  ⊘ Skipped inactive user ${parent.username} (Level ${parent.levelLetter})`);
+            console.log(`  ⊘ [Tree] Skipped inactive user ${parent.username}`);
             continue;
         }
 
         const level = parent.levelLetter;
 
-        console.log(level)
-        // LEVEL J → collect only
+        // LEVEL J → collect for sharing
         if (level === 'J') {
             jUsers.push(parent);
             continue;
         }
 
-        // Skip duplicated levels
+        // Skip duplicated levels (Rule: one payment per level A-I)
         if (paidLevels.has(level)) {
-            console.log(`  ⊘ Skipped duplicate level ${level} for ${parent.username}`);
+            console.log(`  ⊘ [Tree] Skipped duplicate level ${level} for ${parent.username}`);
             continue;
         }
 
-        const reward = treePointsShare * TREE_LEVEL_PERCENTAGE;
-        parent.points += reward;
-        console.log(parent)
-        await parent.save();
+        // Calculate and round reward (10% of Tree Share = 5% of Total Checkout)
+        const rawReward = treePointsShare * TREE_LEVEL_PERCENTAGE;
+        const reward = Math.round(rawReward * 100) / 100;
 
-        paidLevels.add(level);
-        totalDistributed += reward;
+        if (reward > 0) {
+            parent.points = Math.round((parent.points + reward) * 100) / 100;
+            await parent.save();
 
-        distributionLog.push({
-            recipientId: parent._id,
-            recipientUsername: parent.username,
-            level,
-            amount: reward
-        });
-
-        console.log(`  ✓ Level ${level}: ${parent.username} received ${reward.toFixed(2)} points`);
-
-        await TransactionModel.create({
-            customerId: parent._id,
-            userName: parent.username,
-            userEmail: parent.email,
-            amount: reward,
-            type: 'tree_reward',
-            status: 'completed',
-            description: `Tree reward - Level ${level}`,
-            relatedTransaction: checkoutTransaction._id,
-            processedAt: new Date()
-        });
-    }
-
-    // DISTRIBUTE LEVEL J (shared)
-    if (jUsers.length > 0) {
-        const jShare = treePointsShare * TREE_LEVEL_PERCENTAGE;
-        const perUser = jShare / jUsers.length;
-
-        console.log(`  ✓ Level J: ${jUsers.length} users sharing ${jShare.toFixed(2)} points (${perUser.toFixed(2)} each)`);
-
-        for (const user of jUsers) {
-            user.points += perUser;
-            await user.save();
-
-            totalDistributed += perUser;
+            paidLevels.add(level);
+            totalDistributed += reward;
 
             distributionLog.push({
-                recipientId: user._id,
-                recipientUsername: user.username,
-                level: 'J',
-                amount: perUser,
-                sharedWith: jUsers.length
+                recipientId: parent._id,
+                recipientUsername: parent.username,
+                level,
+                amount: reward
             });
 
             await TransactionModel.create({
-                customerId: user._id,
-                userName: user.username,
-                userEmail: user.email,
-                amount: perUser,
-                type: 'tree_reward_shared',
+                customerId: parent._id,
+                userName: parent.username,
+                userEmail: parent.email,
+                amount: reward,
+                type: 'tree_reward',
                 status: 'completed',
-                description: `Tree reward - Level J shared (${jUsers.length})`,
+                description: `Tree reward - Level ${level} (Rounded)`,
                 relatedTransaction: checkoutTransaction._id,
                 processedAt: new Date()
             });
+
+            console.log(`  ✓ [Tree] Level ${level}: ${parent.username} +${reward.toFixed(2)} pts`);
         }
     }
+
+    // DISTRIBUTE LEVEL J (Shared among all Level J users in upline)
+    if (jUsers.length > 0) {
+        const rawJShare = treePointsShare * TREE_LEVEL_PERCENTAGE;
+        const jShare = Math.round(rawJShare * 100) / 100;
+
+        // Exact division and rounding for each user
+        const perUser = Math.round((jShare / jUsers.length) * 100) / 100;
+
+        console.log(`  ✓ [Tree] Level J: ${jUsers.length} users sharing ${jShare.toFixed(2)} pts (${perUser.toFixed(2)} each)`);
+
+        for (const user of jUsers) {
+            if (perUser > 0) {
+                user.points = Math.round((user.points + perUser) * 100) / 100;
+                await user.save();
+
+                totalDistributed += perUser;
+
+                distributionLog.push({
+                    recipientId: user._id,
+                    recipientUsername: user.username,
+                    level: 'J',
+                    amount: perUser,
+                    sharedWith: jUsers.length
+                });
+
+                await TransactionModel.create({
+                    customerId: user._id,
+                    userName: user.username,
+                    userEmail: user.email,
+                    amount: perUser,
+                    type: 'tree_reward_shared',
+                    status: 'completed',
+                    description: `Tree reward - Level J shared (${jUsers.length} users)`,
+                    relatedTransaction: checkoutTransaction._id,
+                    processedAt: new Date()
+                });
+            }
+        }
+    }
+
+    // Round total distributed to avoid floating point residue
+    totalDistributed = Math.round(totalDistributed * 100) / 100;
 
     return {
         totalDistributed,
         distributionLog,
-        unused: treePointsShare - totalDistributed
+        unused: Math.max(0, Math.round((treePointsShare - totalDistributed) * 100) / 100)
     };
 }
 
@@ -189,109 +274,169 @@ async function distributeTreePoints({ buyer, treePointsShare, checkoutTransactio
 // ============================================
 
 async function processJob(job) {
-    console.log(`\n[Worker] Processing job ${job._id}`);
-    console.log(`  Customer: ${job.customerId}`);
-    console.log(`  Transaction: ${job.checkoutTransactionId}`);
-    console.log(`  Attempt: ${job.attempts}/${job.maxAttempts}`);
+    console.log(`\n[Worker] ⚙️ Processing job ${job._id} for ${job.payload.cartTotal} pts`);
 
     try {
-        // Mark job as processing
         await job.markProcessing();
 
-        // Fetch buyer and checkout transaction
+        const config = await SettingsModel.getCheckoutConfig();
         const buyer = await CustomerModel.findById(job.customerId);
-        if (!buyer) {
-            throw new Error(`Customer ${job.customerId} not found`);
-        }
+        if (!buyer) throw new Error(`Customer ${job.customerId} not found`);
 
         const checkoutTransaction = await TransactionModel.findById(job.checkoutTransactionId);
-        if (!checkoutTransaction) {
-            throw new Error(`Checkout transaction ${job.checkoutTransactionId} not found`);
-        }
+        if (!checkoutTransaction) throw new Error(`Transaction ${job.checkoutTransactionId} not found`);
 
-        const { treePointsShare, appPointsShare, giftsPointsShare } = job.payload;
+        // Extract shares safely
+        const treePointsShare = Number(job.payload.treePointsShare) || 0;
+        const appPointsShare = Number(job.payload.appPointsShare) || 0;
+        const giftsPointsShare = Number(job.payload.giftsPointsShare) || 0;
+        const directReferralShare = Number(job.payload.directReferralShare) || 0;
 
-        // Step 1: Upgrade tree levels
-        console.log(`[Worker] Step 1: Upgrading tree levels`);
-        await upgradeTreeLevels(job.customerId);
-
-        // Step 2: Distribute tree points
-        console.log(`[Worker] Step 2: Distributing tree points (${treePointsShare.toFixed(2)} total)`);
+        // 1. Distribute Tree points
+        console.log(`[Worker] Step 1: Distributing tree points`);
         const treeResult = await distributeTreePoints({
             buyer,
             treePointsShare,
             checkoutTransaction
         });
 
-        // Step 3: Add unused to gifts
-        let finalGiftsShare = giftsPointsShare;
-        if (treeResult.unused > 0) {
-            finalGiftsShare += treeResult.unused;
-            console.log(`[Worker] Step 3: Added ${treeResult.unused.toFixed(2)} unused tree points to gifts`);
+        // 2. Determine First Purchase status
+        const isFirst = await isFirstPurchase(buyer._id, checkoutTransaction._id);
+
+        // 3. Calculate App points (App revenue + unused tree)
+        let finalAppPointsShare = Math.round((appPointsShare + treeResult.unused) * 100) / 100;
+
+        console.log("------------------------------------------------")
+        console.log(isFirst)
+        console.log(directReferralShare)
+        console.log(job.payload)
+        console.log(!isFirst && directReferralShare > 0)
+        console.log("------------------------------------------------")
+        // 4. Add referral points for non-first purchase directly to buyer points
+        if (!isFirst && directReferralShare > 0) {
+            buyer.points = Math.round((buyer.points + directReferralShare) * 100) / 100;
+            await buyer.save();
+            console.log(`  ✓ [Referral] Added ${directReferralShare} pts to buyer ${buyer.username} (non-first purchase)`);
+
+            // Include referral points in app revenue for system log
+            finalAppPointsShare = Math.round((finalAppPointsShare + directReferralShare) * 100) / 100;
         }
 
-        // Step 4: Create Gifts & App Transactions
-        console.log(`[Worker] Step 4: Creating system reward transactions`);
+        // 5. Log system income transactions
+        console.log(`[Worker] Step 2: Logging system income`);
 
+        // A) Gifts Pool Income
         await TransactionModel.create({
             customerId: buyer._id,
             userName: 'System',
             userEmail: 'system@mall.com',
-            amount: finalGiftsShare,
+            amount: giftsPointsShare,
             type: 'gifts_reward',
             status: 'completed',
-            description: 'Gifts points from checkout',
+            description: 'Income to Gifts Pool from checkout split',
             relatedTransaction: checkoutTransaction._id,
             processedAt: new Date()
         });
 
+        // B) App Revenue (including referral points if non-first)
         await TransactionModel.create({
             customerId: buyer._id,
             userName: 'System',
             userEmail: 'system@mall.com',
-            amount: appPointsShare,
+            amount: finalAppPointsShare,
             type: 'app_reward',
             status: 'completed',
-            description: 'App revenue points from checkout',
+            description: isFirst
+                ? 'App revenue split from checkout'
+                : 'App revenue split including referral points (non-first purchase)',
             relatedTransaction: checkoutTransaction._id,
             processedAt: new Date()
         });
 
-        // Step 5: Update checkout transaction with final details
-        console.log(`[Worker] Step 5: Updating checkout transaction`);
+        // 6. First Purchase Bonuses
+        if (isFirst) {
+            console.log(`[Worker] ✨ Processing first purchase bonuses for ${buyer.username}`);
+
+            // Referral Bonus to Parent
+            if (buyer.parentCustomer && directReferralShare > 0) {
+                const parent = await CustomerModel.findById(buyer.parentCustomer);
+                if (parent && isActiveCustomer(parent)) {
+                    const bonus = Math.round(directReferralShare * 100) / 100;
+                    parent.points = Math.round((parent.points + bonus) * 100) / 100;
+                    await parent.save();
+
+                    await TransactionModel.create({
+                        customerId: parent._id,
+                        userName: parent.username,
+                        userEmail: parent.email,
+                        amount: bonus,
+                        type: 'direct_referral_reward',
+                        status: 'completed',
+                        description: `Direct Referral Reward - First purchase bonus for referring ${buyer.username}`,
+                        relatedTransaction: checkoutTransaction._id,
+                        processedAt: new Date()
+                    });
+                    console.log(`  ✓ [Referral] Gifted ${bonus} pts to parent ${parent.username}`);
+                }
+            }
+
+            // Signup Bonus from Gifts Pool
+            if (config.signupPoints.enabled && config.signupPoints.amount > 0) {
+                const signupBonus = config.signupPoints.amount;
+                try {
+                    const balanceCheck = await RewardSettings.checkGiftsBalance(signupBonus);
+                    if (balanceCheck.sufficient) {
+                        buyer.points = Math.round((buyer.points + signupBonus) * 100) / 100;
+                        await buyer.save();
+
+                        await TransactionModel.create({
+                            customerId: buyer._id,
+                            userName: buyer.username,
+                            userEmail: buyer.email,
+                            amount: signupBonus,
+                            type: 'signup_gifts_reward',
+                            status: 'completed',
+                            description: `Signup Bonus - Welcome gift (Deducted from Gifts Pool)`,
+                            relatedTransaction: checkoutTransaction._id,
+                            processedAt: new Date()
+                        });
+                        console.log(`  ✓ [Signup] Gifted ${signupBonus} pts to buyer ${buyer.username} from Pool`);
+                    } else {
+                        console.log(`  ⚠️ [Signup] Insufficient Gifts Pool balance (${balanceCheck.available})`);
+                    }
+                } catch (err) {
+                    console.error(`  ❌ [Signup] Error:`, err.message);
+                }
+            }
+        }
+
+        // 7. Check for Tree Level Upgrades
+        console.log(`[Worker] Step 3: Checking for level upgrades`);
+        await upgradeTreeLevels(job.customerId, checkoutTransaction, config);
+
+        // 8. Update original transaction
         checkoutTransaction.treeDistribution = treeResult.distributionLog;
-        checkoutTransaction.giftsPointsShare = finalGiftsShare;
+        checkoutTransaction.giftsPointsShare = giftsPointsShare;
+        checkoutTransaction.appPointsShare = finalAppPointsShare;
         await checkoutTransaction.save();
 
-        // Mark job as completed
         await job.markCompleted();
-
-        console.log(`[Worker] ✅ Job ${job._id} completed successfully`);
-        console.log(`  Tree distributed: ${treeResult.totalDistributed.toFixed(2)}`);
-        console.log(`  Unused (to gifts): ${treeResult.unused.toFixed(2)}`);
-        console.log(`  Final gifts share: ${finalGiftsShare.toFixed(2)}`);
+        console.log(`[Worker] ✅ Job ${job._id} finalized successfully`);
 
         return {
             success: true,
-            distributedToTree: treeResult.totalDistributed,
-            unused: treeResult.unused,
-            finalGiftsShare
+            isFirst,
+            totalAppRevenue: finalAppPointsShare,
+            treeDistributed: treeResult.totalDistributed
         };
 
     } catch (error) {
         console.error(`[Worker] ❌ Job ${job._id} failed:`, error.message);
-
         await job.markFailed(error);
-
-        if (job.attempts >= job.maxAttempts) {
-            console.error(`[Worker] Job ${job._id} permanently failed after ${job.attempts} attempts`);
-        } else {
-            console.log(`[Worker] Job ${job._id} will be retried (attempt ${job.attempts}/${job.maxAttempts})`);
-        }
-
         throw error;
     }
 }
+
 
 // ============================================
 // WORKER LOOP
