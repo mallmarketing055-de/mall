@@ -58,6 +58,7 @@ const rewardSettingsSchema = new mongoose.Schema({
 // Singleton pattern helper: ensuring only one settings document exists
 rewardSettingsSchema.statics.getSettings = async function () {
     let settings = await this.findOne();
+    console.log(settings);
     if (!settings) {
         settings = await this.create({});
     }

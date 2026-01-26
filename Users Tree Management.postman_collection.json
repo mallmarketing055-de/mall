@@ -1,0 +1,260 @@
+{
+  "info": {
+    "_postman_id": "85c351a6-6667-445b-9416-cf15b5e4e519",
+    "name": "Users Tree Management",
+    "description": "Collection to manage users hierarchy (assign manager, get tree, list users).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "17922408",
+    "_collection_link": "https://go.postman.co/collection/17922408-85c351a6-6667-445b-9416-cf15b5e4e519?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Assign Manager to User",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"managerId\": \"MANAGER_USER_ID\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/superadmin/users/USER_ID/assign-manager",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "superadmin",
+            "users",
+            "USER_ID",
+            "assign-manager"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Success",
+          "originalRequest": {
+            "header": [],
+            "url": {
+              "raw": ""
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [],
+          "cookie": [],
+          "body": "{\n  \"message\": \"Manager assigned successfully\",\n  \"user\": {\n    \"_id\": \"6069c988d2bb3c598699121c\",\n    \"name\": \"Ali\",\n    \"email\": \"ali@example.com\",\n    \"role\": \"User\",\n    \"managerId\": \"6069c988d2bb3c598699121a\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "Get Users Tree",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/superadmin/users/tree",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "superadmin",
+            "users",
+            "tree"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Tree Example",
+          "originalRequest": {
+            "header": [],
+            "url": {
+              "raw": ""
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [],
+          "cookie": [],
+          "body": "[\n  {\n    \"_id\": \"6069c988d2bb3c598699121a\",\n    \"name\": \"Ahmed\",\n    \"email\": \"ahmed@example.com\",\n    \"role\": \"Admin\",\n    \"managerId\": null,\n    \"children\": [\n      {\n        \"_id\": \"6069c988d2bb3c598699121c\",\n        \"name\": \"Ali\",\n        \"email\": \"ali@example.com\",\n        \"role\": \"User\",\n        \"managerId\": \"6069c988d2bb3c598699121a\",\n        \"children\": []\n      }\n    ]\n  }\n]"
+        }
+      ]
+    },
+    {
+      "name": "Get Users List (with search & pagination)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/users?search=ali&page=1&limit=10",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "users"
+          ],
+          "query": [
+            {
+              "key": "search",
+              "value": "ali"
+            },
+            {
+              "key": "page",
+              "value": "1"
+            },
+            {
+              "key": "limit",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "Paginated Example",
+          "originalRequest": {
+            "header": [],
+            "url": {
+              "raw": ""
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "_postman_previewlanguage": "json",
+          "header": [],
+          "cookie": [],
+          "body": "{\n  \"users\": [\n    {\n      \"_id\": \"6069c988d2bb3c598699121c\",\n      \"name\": \"Ali\",\n      \"email\": \"ali@example.com\",\n      \"role\": \"User\",\n      \"managerId\": \"6069c988d2bb3c598699121a\"\n    }\n  ],\n  \"pagination\": {\n    \"total\": 25,\n    \"page\": 1,\n    \"pages\": 3\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "http://127.0.0.1:6060/chat",
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4ZGE3YmQ2ODkxNTQwM2M0ODA4MTNhZSIsInJvbGUiOiJBZG1pbiIsImVtYWlsIjoidGVzdEB0ZXN0dC5jb20iLCJpYXQiOjE3NjExNDM2NDJ9.9sRS1kKvMJY19RNEdo9egXnDl84FHCH2RGkeg9Ap_mg",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\r\n    \"leadId\": \"606ae600d2bb3c5986991237\",\r\n    \"leadBrokerId\": \"6069c938d2bb3c5986991219\",\r\n    \"propertyId\": \"607c2d2c2f4c660181149269\",\r\n    \"propertyBrokerId\": \"68da7bd68915403c480813ae\"\r\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://127.0.0.1:6060/chat",
+          "protocol": "http",
+          "host": [
+            "127",
+            "0",
+            "0",
+            "1"
+          ],
+          "port": "6060",
+          "path": [
+            "chat"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "http://139.162.228.129/user/login",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer undefined"
+          },
+          {
+            "key": "Referer",
+            "value": "http://localhost:3000/"
+          },
+          {
+            "key": "User-Agent",
+            "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/143.0.0.0 Safari/537.36"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json, text/plain, */*"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"email\":\"jowrrdxfwtpxaqnufp@twzhhq.com\",\"password\":\"bj4bo9zk\",\"notificationToken\":\"\",\"devicePlatform\":\"web\"}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://139.162.228.129/user/login",
+          "protocol": "http",
+          "host": [
+            "139",
+            "162",
+            "228",
+            "129"
+          ],
+          "path": [
+            "user",
+            "login"
+          ]
+        }
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:6060"
+    },
+    {
+      "key": "token",
+      "value": "PASTE_YOUR_JWT_TOKEN"
+    }
+  ]
+}

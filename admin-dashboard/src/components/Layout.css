@@ -2,7 +2,8 @@
   margin-left: 15px;
   max-width: none;
 }
-.page-content{
+
+.page-content {
   padding: 15px;
 }
 
@@ -303,7 +304,7 @@
   }
 
   .main-content {
-    margin-left: 280px;
+    /* margin-left: 280px; */
     width: calc(100% - 280px);
   }
 }
@@ -313,7 +314,7 @@
   .header-title h1 {
     font-size: 20px;
   }
-  
+
   .admin-profile .profile-name {
     display: none;
   }
@@ -324,19 +325,19 @@
   .page-content {
     padding: 0;
   }
-  
+
   .header {
     padding: 0 15px;
   }
-  
+
   .header-title h1 {
     font-size: 18px;
   }
-  
+
   .admin-profile {
     display: none;
   }
-  
+
   .sidebar {
     width: 100%;
   }

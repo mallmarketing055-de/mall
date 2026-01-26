@@ -3,8 +3,10 @@ import Layout from './Layout';
 import { toast } from 'react-toastify';
 import { rewardSettingsAPI } from '../services/api';
 import { FaSave, FaUndo, FaGift, FaUserPlus, FaNetworkWired, FaWallet, FaPlus, FaChartLine } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 const RewardSettingsManagement = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [addingBalance, setAddingBalance] = useState(false);
@@ -152,37 +154,45 @@ const RewardSettingsManagement = () => {
   return (
     <Layout>
       <div className="settings-container">
-        <div className="header">
-          <h1>Reward Settings</h1>
-          <p className="subtitle">Configure point distribution and bonus rules</p>
-        </div>
-
         <div className="settings-grid">
+
           {/* System Stats Overview Card */}
           <div className="card stats-card">
             <div className="card-header">
               <div className="card-title-wrap">
                 <FaChartLine className="card-icon" />
-                <h2>System Economy Overview</h2>
+                <h2>{t("economy.systemOverview")}</h2>
               </div>
             </div>
+
             <div className="card-body">
               <div className="advanced-stats-grid">
                 <div className="adv-stat-item">
-                  <span className="label">Total App Revenue</span>
-                  <span className="value revenue">{(settings.appStats?.totalRevenue || 0).toLocaleString()} <small>pts</small></span>
+                  <span className="label">{t("economy.totalRevenue")}</span>
+                  <span className="value revenue">
+                    {(settings.appStats?.totalRevenue || 0).toLocaleString()} <small>{t("economy.pts")}</small>
+                  </span>
                 </div>
+
                 <div className="adv-stat-item">
-                  <span className="label">Total Distributed to Users</span>
-                  <span className="value distributed">{(settings.userStats?.totalDistributed || 0).toLocaleString()} <small>pts</small></span>
+                  <span className="label">{t("economy.totalDistributed")}</span>
+                  <span className="value distributed">
+                    {(settings.userStats?.totalDistributed || 0).toLocaleString()} <small>{t("economy.pts")}</small>
+                  </span>
                 </div>
+
                 <div className="adv-stat-item mini">
-                  <span className="label">Signup Gifts Total</span>
-                  <span className="value">{(settings.poolStats?.signupSpent || 0).toLocaleString()} pts</span>
+                  <span className="label">{t("economy.signupGiftsTotal")}</span>
+                  <span className="value">
+                    {(settings.poolStats?.signupSpent || 0).toLocaleString()} {t("economy.pts")}
+                  </span>
                 </div>
+
                 <div className="adv-stat-item mini">
-                  <span className="label">Level Gifts Total</span>
-                  <span className="value">{(settings.poolStats?.levelSpent || 0).toLocaleString()} pts</span>
+                  <span className="label">{t("economy.levelGiftsTotal")}</span>
+                  <span className="value">
+                    {(settings.poolStats?.levelSpent || 0).toLocaleString()} {t("economy.pts")}
+                  </span>
                 </div>
               </div>
             </div>
@@ -193,39 +203,43 @@ const RewardSettingsManagement = () => {
             <div className="card-header">
               <div className="card-title-wrap">
                 <FaWallet className="card-icon" />
-                <h2>Gifts Points Pool Management</h2>
+                <h2>{t("economy.poolManagement")}</h2>
               </div>
             </div>
+
             <div className="card-body">
               <div className="pool-stats-summary">
                 <div className="stat-item">
-                  <span className="label">Total Pool Income</span>
-                  <span className="value earned">{(settings.poolStats?.totalEarned || 0).toLocaleString()} <small>pts</small></span>
+                  <span className="label">{t("economy.poolIncome")}</span>
+                  <span className="value earned">
+                    {(settings.poolStats?.totalEarned || 0).toLocaleString()} <small>{t("economy.pts")}</small>
+                  </span>
                 </div>
+
                 <div className="stat-item">
-                  <span className="label">Total Pool Expenses</span>
-                  <span className="value spent">{(settings.poolStats?.totalSpent || 0).toLocaleString()} <small>pts</small></span>
+                  <span className="label">{t("economy.poolExpenses")}</span>
+                  <span className="value spent">
+                    {(settings.poolStats?.totalSpent || 0).toLocaleString()} <small>{t("economy.pts")}</small>
+                  </span>
                 </div>
               </div>
 
               <div className="balance-display-modern">
                 <div className="balance-info">
-                  <span className="balance-label">Current Pool Balance</span>
+                  <span className="balance-label">{t("economy.currentBalance")}</span>
                   <div className="balance-amount">
                     {(settings.poolStats?.balance || 0).toLocaleString()}
-                    <span className="balance-unit">points</span>
+                    <span className="balance-unit">{t("economy.points")}</span>
                   </div>
                 </div>
-                <button
-                  className="btn-add-balance"
-                  onClick={() => setShowAddBalanceModal(true)}
-                >
-                  <FaPlus /> Manual Deposit
+
+                <button className="btn-add-balance" onClick={() => setShowAddBalanceModal(true)}>
+                  <FaPlus /> {t("economy.manualDeposit")}
                 </button>
               </div>
 
               <p className="pool-disclaimer">
-                * Balance: All Gift Income - (Signup + Level Bonuses)
+                {t("economy.balanceNote")}
               </p>
             </div>
           </div>
@@ -235,8 +249,9 @@ const RewardSettingsManagement = () => {
             <div className="card-header">
               <div className="card-title-wrap">
                 <FaGift className="card-icon" />
-                <h2>Level Upgrade Gifts</h2>
+                <h2>{t("economy.levelUpgradeGifts")}</h2>
               </div>
+
               <label className="toggle-switch">
                 <input
                   type="checkbox"
@@ -249,13 +264,13 @@ const RewardSettingsManagement = () => {
 
             <div className="card-body">
               <p className="description">
-                Fixed point amount awarded when a user upgrades to a specific level (Deducted from Gifts Pool).
+                {t("economy.levelUpgradeDescription")}
               </p>
 
-              <div className={`levels-grid ${!settings.enableLevelGifts ? 'disabled' : ''}`}>
+              <div className={`levels-grid ${!settings.enableLevelGifts ? "disabled" : ""}`}>
                 {levels.map(level => (
                   <div key={level} className="input-group">
-                    <label>Level {level}</label>
+                    <label>{t("economy.level")} {level}</label>
                     <div className="input-wrapper">
                       <input
                         type="number"
@@ -265,7 +280,7 @@ const RewardSettingsManagement = () => {
                         onChange={(e) => handleLevelGiftChange(level, e.target.value)}
                         disabled={!settings.enableLevelGifts}
                       />
-                      <span className="suffix">pts</span>
+                      <span className="suffix">{t("economy.pts")}</span>
                     </div>
                   </div>
                 ))}
@@ -278,16 +293,17 @@ const RewardSettingsManagement = () => {
             <div className="card-header">
               <div className="card-title-wrap">
                 <FaNetworkWired className="card-icon" />
-                <h2>Referral First Payment Bonus</h2>
+                <h2>{t("economy.referralBonus")}</h2>
               </div>
             </div>
+
             <div className="card-body">
               <p className="description">
-                Bonus awarded to the referrer when their direct referral completes their first purchase.
+                {t("economy.referralDescription")}
               </p>
 
               <div className="input-group full-width">
-                <label>Direct Referral Share (5% of Checkout Total)</label>
+                <label>{t("economy.referralLabel")}</label>
                 <div className="input-wrapper">
                   <input
                     type="number"
@@ -308,46 +324,49 @@ const RewardSettingsManagement = () => {
             <div className="card-header">
               <div className="card-title-wrap">
                 <FaUserPlus className="card-icon" />
-                <h2>Signup Gifts</h2>
+                <h2>{t("economy.signupGifts")}</h2>
               </div>
+
               <label className="toggle-switch">
                 <input
                   type="checkbox"
                   checked={settings.signupPoints?.enabled}
-                  onChange={(e) => handleSignupPointsChange('enabled', e.target.checked)}
+                  onChange={(e) => handleSignupPointsChange("enabled", e.target.checked)}
                 />
                 <span className="slider round"></span>
               </label>
             </div>
+
             <div className="card-body">
               <p className="description">
-                One-time point bonus awarded to new users upon their first completed purchase.
+                {t("economy.signupDescription")}
               </p>
 
-              <div className={`input-group full-width ${!settings.signupPoints?.enabled ? 'disabled' : ''}`}>
-                <label>Points Amount</label>
+              <div className={`input-group full-width ${!settings.signupPoints?.enabled ? "disabled" : ""}`}>
+                <label>{t("economy.pointsAmount")}</label>
                 <div className="input-wrapper">
                   <input
                     type="number"
                     min="0"
                     value={settings.signupPoints?.amount || 0}
-                    onChange={(e) => handleSignupPointsChange('amount', parseFloat(e.target.value))}
+                    onChange={(e) => handleSignupPointsChange("amount", parseFloat(e.target.value))}
                     disabled={!settings.signupPoints?.enabled}
                   />
-                  <span className="suffix">pts</span>
+                  <span className="suffix">{t("economy.pts")}</span>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
+        {/* Actions */}
         <div className="actions-bar">
           <button className="btn-secondary" onClick={fetchSettings} disabled={saving}>
-            <FaUndo /> Reset
+            <FaUndo /> {t("economy.reset")}
           </button>
+
           <button className="btn-primary" onClick={handleSave} disabled={saving}>
-            {saving ? <div className="spinner-small"></div> : <FaSave />}
-            {saving ? 'Saving...' : 'Save Changes'}
+            {saving ? t("economy.saving") : t("economy.saveChanges")}
           </button>
         </div>
 
@@ -355,42 +374,37 @@ const RewardSettingsManagement = () => {
         {showAddBalanceModal && (
           <div className="modal-overlay" onClick={() => setShowAddBalanceModal(false)}>
             <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <h3>Add Funds to Gifts Points Pool</h3>
-              <p className="modal-description">Enter the amount of points to add to the pool:</p>
+              <h3>{t("economy.addFundsTitle")}</h3>
+              <p className="modal-description">{t("economy.addFundsDescription")}</p>
+
               <div className="input-group full-width">
-                <label>Amount</label>
+                <label>{t("economy.amount")}</label>
                 <div className="input-wrapper">
                   <input
                     type="number"
                     min="0"
                     value={balanceToAdd}
                     onChange={(e) => setBalanceToAdd(e.target.value)}
-                    placeholder="Enter amount"
+                    placeholder={t("economy.enterAmount")}
                     autoFocus
                   />
-                  <span className="suffix">pts</span>
+                  <span className="suffix">{t("economy.pts")}</span>
                 </div>
               </div>
+
               <div className="modal-actions">
-                <button
-                  className="btn-secondary"
-                  onClick={() => setShowAddBalanceModal(false)}
-                  disabled={addingBalance}
-                >
-                  Cancel
+                <button className="btn-secondary" onClick={() => setShowAddBalanceModal(false)} disabled={addingBalance}>
+                  {t("economy.cancel")}
                 </button>
-                <button
-                  className="btn-primary"
-                  onClick={handleAddBalance}
-                  disabled={addingBalance}
-                >
-                  {addingBalance ? 'Adding...' : 'Add Funds'}
+                <button className="btn-primary" onClick={handleAddBalance} disabled={addingBalance}>
+                  {addingBalance ? t("economy.adding") : t("economy.addFunds")}
                 </button>
               </div>
             </div>
           </div>
         )}
       </div>
+
 
       <style jsx>{`
         .settings-container {
@@ -399,15 +413,15 @@ const RewardSettingsManagement = () => {
           margin: 0 auto;
         }
 
-        .header {
-          margin-bottom: 30px;
-        }
+        // .header {
+        //   margin-bottom: 30px;
+        // }
 
-        .header h1 {
-          font-size: 28px;
-          color: #2c3e50;
-          margin: 0 0 10px 0;
-        }
+        // .header h1 {
+        //   font-size: 28px;
+        //   color: #2c3e50;
+        //   margin: 0 0 10px 0;
+        // }
 
         .subtitle {
           color: #7f8c8d;

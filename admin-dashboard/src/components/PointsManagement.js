@@ -208,7 +208,7 @@ const PointsManagement = () => {
       </div>
       <style jsx>{`
        .main-content{
-        margin-left: 8px;
+        margin-left: 0 !important;
         max-width: none;
       }
         .product-management {
@@ -594,7 +594,7 @@ const PointsManagement = () => {
       `}</style>
       <style jsx>{`
       .main-content{
-        margin-left: 8px;
+        margin-left: 0 !important;
         max-width: none;
       }
         .dashboard {

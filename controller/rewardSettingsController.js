@@ -6,6 +6,7 @@ exports.getRewardSettings = async (req, res) => {
     try {
         const settings = await RewardSettings.getSettings();
 
+        console.log(settings);
         // Calculate Statistics (derived from transaction ledger)
         const incomeTypes = ['gifts_reward'];
         const expenseTypes = ['signup_gifts_reward', 'level_gift_reward'];
@@ -52,6 +53,7 @@ exports.getRewardSettings = async (req, res) => {
             success: true,
             data: {
                 ...settings.toObject(),
+                levelGifts: settings.levelGifts,
                 poolStats: {
                     balance,
                     totalEarned: poolData.totalGiftsIncome,
