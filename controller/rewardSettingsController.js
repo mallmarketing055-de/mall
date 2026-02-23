@@ -110,17 +110,23 @@ exports.updateRewardSettings = async (req, res) => {
 
         if (levelGifts) {
             const validLevels = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
-            for (const [level, percentage] of Object.entries(levelGifts)) {
+            for (const [level, points] of Object.entries(levelGifts)) {
                 if (!validLevels.includes(level)) {
                     return res.status(400).json({
                         success: false,
-                        message: `Invalid level letter: ${level}`
+                        message: `Invalid level letter: ${level}. Supported levels are A-J.`
                     });
                 }
-                if (typeof percentage !== 'number' || percentage < 0 || percentage > 1) {
+
+                // Validate that 'points' is a positive integer
+                const isPositiveInteger = typeof points === 'number' &&
+                    Number.isInteger(points) &&
+                    points >= 0;
+
+                if (!isPositiveInteger) {
                     return res.status(400).json({
                         success: false,
-                        message: `Percentage for level ${level} must be between 0 and 1`
+                        message: `Reward amount for level ${level} must be a positive whole number (Points). Received: ${points}`
                     });
                 }
             }
