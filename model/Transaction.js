@@ -73,6 +73,10 @@ const transactionSchema = new mongoose.Schema({
       type: String,
       required: true
     },
+    productArabicName: {
+      type: String,
+      required: true
+    },
     quantity: {
       type: Number,
       required: true,

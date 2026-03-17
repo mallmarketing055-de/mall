@@ -20,7 +20,7 @@ module.exports.getAllTransactions = async (req, res) => {
 
     // Build query
     const query = {};
-    
+
     if (search) {
       query.$or = [
         { reference: { $regex: search, $options: 'i' } },
@@ -29,12 +29,12 @@ module.exports.getAllTransactions = async (req, res) => {
         { description: { $regex: search, $options: 'i' } }
       ];
     }
-    
+
     if (status) query.status = status;
     if (type) query.type = type;
     if (minAmount !== undefined) query.amount = { ...query.amount, $gte: minAmount };
     if (maxAmount !== undefined) query.amount = { ...query.amount, $lte: maxAmount };
-    
+
     if (dateFrom || dateTo) {
       query.createdAt = {};
       if (dateFrom) query.createdAt.$gte = new Date(dateFrom);
@@ -119,6 +119,14 @@ module.exports.getUserTransactions = async (req, res) => {
     const query = { customerId: userId };
     if (status) query.status = status;
     if (type) query.type = type;
+    const user = await CustomerModel.findById(userId);
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+    query.userEmail = user.email;
 
     const transactions = await TransactionModel.find(query)
       .sort({ createdAt: -1 })
@@ -177,6 +185,16 @@ module.exports.createTransaction = async (req, res) => {
     // Add customer info to transaction
     transactionData.userName = customer.name;
     transactionData.userEmail = customer.email;
+
+    const product = await ProductModel.findById(transactionData.productId);
+    if (!product) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+    transactionData.productName = product.name;
+    transactionData.productArabicName = product.nameArabic;
 
     const newTransaction = new TransactionModel(transactionData);
     await newTransaction.save();
@@ -246,7 +264,7 @@ module.exports.exportTransactions = async (req, res) => {
 
     // Build query (same as getAllTransactions)
     const query = {};
-    
+
     if (search) {
       query.$or = [
         { reference: { $regex: search, $options: 'i' } },
@@ -254,10 +272,10 @@ module.exports.exportTransactions = async (req, res) => {
         { userEmail: { $regex: search, $options: 'i' } }
       ];
     }
-    
+
     if (status) query.status = status;
     if (type) query.type = type;
-    
+
     if (dateFrom || dateTo) {
       query.createdAt = {};
       if (dateFrom) query.createdAt.$gte = new Date(dateFrom);
@@ -270,7 +288,7 @@ module.exports.exportTransactions = async (req, res) => {
 
     // Generate CSV
     const csvHeader = 'Reference,User Name,Email,Amount,Status,Type,Payment Method,Created Date\n';
-    const csvData = transactions.map(t => 
+    const csvData = transactions.map(t =>
       `${t.reference},${t.userName},"${t.userEmail}",${t.amount},${t.status},${t.type},${t.paymentMethod},${t.createdAt.toISOString()}`
     ).join('\n');
 
@@ -297,16 +315,16 @@ module.exports.getTransactionStats = async (req, res) => {
     const endDate = req.query.endDate;
 
     const stats = await TransactionModel.getStats({ startDate, endDate });
-    
+
     // Get monthly growth
     const lastMonth = new Date();
     lastMonth.setMonth(lastMonth.getMonth() - 1);
-    
-    const thisMonthStats = await TransactionModel.getStats({ 
-      startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1) 
+
+    const thisMonthStats = await TransactionModel.getStats({
+      startDate: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
     });
-    
-    const lastMonthStats = await TransactionModel.getStats({ 
+
+    const lastMonthStats = await TransactionModel.getStats({
       startDate: new Date(lastMonth.getFullYear(), lastMonth.getMonth(), 1),
       endDate: new Date(new Date().getFullYear(), new Date().getMonth(), 0)
     });
